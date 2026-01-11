@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Warm Beige Base Theme --- */
+    --background: 35 40% 96%;           /* soft beige background */
+    --foreground: 25 20% 20%;          /* dark brown text */
+    --card: 35 40% 98%;
+    --card-foreground: 25 20% 20%;
+    --popover: 35 40% 98%;
+    --popover-foreground: 25 20% 20%;
+    --primary: 15 60% 40%;             /* warm terracotta primary */
+    --primary-foreground: 35 40% 96%;
+    --secondary: 35 25% 90%;           /* lighter beige secondary */
+    --secondary-foreground: 25 20% 20%;
+    --muted: 35 20% 88%;
+    --muted-foreground: 25 15% 35%;
+    --accent: 15 60% 40%;
+    --accent-foreground: 35 40% 96%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 35 40% 96%;
+    --border: 35 25% 85%;
+    --input: 35 25% 85%;
+    --ring: 15 60% 40%;
+    --radius: 0.5rem;
+  }
+
+  /* optional “light” variant if needed */
+  .light {
+    --background: 35 40% 96%;
+    --foreground: 25 20% 20%;
+    --card: 35 40% 98%;
+    --card-foreground: 25 20% 20%;
+    --popover: 35 40% 98%;
+    --popover-foreground: 25 20% 20%;
+    --primary: 15 60% 40%;
+    --primary-foreground: 35 40% 96%;
+    --secondary: 35 25% 90%;
+    --secondary-foreground: 25 20% 20%;
+    --muted: 35 20% 88%;
+    --muted-foreground: 25 15% 35%;
+    --accent: 15 60% 40%;
+    --accent-foreground: 35 40% 96%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 35 40% 96%;
+    --border: 35 25% 85%;
+    --input: 35 25% 85%;
+    --ring: 15 60% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.hero-video {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.grid-pattern {
+  background-image: radial-gradient(circle, hsla(35, 40%, 30%, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(15 60% 40% / 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, hsl(15 60% 40% / 0.4) 0%, hsl(15 60% 40% / 0.6) 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, hsl(15 60% 40% / 0.6) 0%, hsl(15 60% 40% / 0.8) 100%);
+  background-clip: padding-box;
+}
+
+/* Elegant Dialog Animations */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialog-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Apply animations via data-state attributes for Radix UI */
+[data-slot="dialog-overlay"][data-state="open"] {
+  animation: overlay-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-slot="dialog-overlay"][data-state="closed"] {
+  animation: overlay-out 0.2s cubic-bezier(0.4, 0, 1, 1);
+}
+
+[data-slot="dialog-content"][data-state="open"] {
+  animation: dialog-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-slot="dialog-content"][data-state="closed"] {
+  animation: dialog-out 0.2s cubic-bezier(0.4, 0, 1, 1);
+}

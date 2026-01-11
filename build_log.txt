@@ -1,0 +1,59 @@
+﻿
+> ashmark@0.1.0 build
+> next build
+
+   Γû▓ Next.js 15.5.5
+   - Environments: .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 7.3s
+   Linting and checking validity of types ...
+node.exe : 
+At C:\Program 
+Files\nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE $NPM_CLI_JS 
+$args
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo          
+    : NotSpecified: (:Stri  
+  ng) [], RemoteException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+ ΓÜá The Next.js plugin was 
+not detected in your ESLint 
+configuration. See https://n
+extjs.org/docs/app/api-refer
+ence/config/eslint#migrating
+-existing-config
+Failed to compile.
+
+./src/app/api/admin/orders/e
+xport/route.ts:52:30
+Type error: Parameter 'o' 
+implicitly has an 'any' 
+type.
+
+[0m [90m 50 |[39m     ]
+ [90m 51 |[39m
+[31m[1m>[22m[39m[90m 
+52 |[39m     
+[36mconst[39m rows 
+[33m=[39m 
+orders[33m.[39mmap((o) 
+[33m=>[39m [
+ [90m    |[39m            
+                  
+[31m[1m^[22m[39m
+ [90m 53 |[39m       
+o[33m.[39mid[33m,[39m
+ [90m 54 |[39m       o[33
+m.[39mcreatedAt[33m.[39mt
+oISOString()[33m,[39m
+ [90m 55 |[39m       o[33
+m.[39mstatus[33m,[39m[0m
+Next.js build worker exited 
+with code: 1 and signal: 
+null
