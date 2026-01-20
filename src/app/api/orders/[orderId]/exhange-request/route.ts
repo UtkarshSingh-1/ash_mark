@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { reason, images } = await request.json()
+    const { reason, newSize, newColor } = await request.json()
 
     const order = await prisma.order.findFirst({
       where: {
@@ -21,29 +21,35 @@ export async function POST(
         userId: session.user.id,
         status: 'DELIVERED',
       },
+      include: { items: true },
     })
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found or not eligible' }, { status: 404 })
     }
 
-    await prisma.returnRequest.create({
+    const item = order.items[0] // simplifying since no item selector UI yet
+
+    await prisma.exchangeRequest.create({
       data: {
         orderId,
         userId: session.user.id,
         reason,
-        images,
+        oldSize: item.size,
+        newSize: newSize ?? item.size,
+        oldColor: item.color,
+        newColor: newColor ?? item.color,
       },
     })
 
     await prisma.order.update({
       where: { id: orderId },
-      data: { returnStatus: 'REQUESTED' },
+      data: { exchangeStatus: 'REQUESTED' },
     })
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Return Request Error:', error)
+    console.error('Exchange Request Error:', error)
     return NextResponse.json({ error: 'Failed to submit' }, { status: 500 })
   }
 }

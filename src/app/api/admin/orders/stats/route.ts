@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-export const dynamic = 'force-dynamic'
+
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth()
@@ -11,6 +11,12 @@ export async function GET(_request: NextRequest) {
 
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
+
+    const issueStatuses = [
+      'CANCELLED',
+      'RETURN_REQUESTED',
+      'EXCHANGE_REQUESTED',
+    ] as const
 
     const [
       pendingCount,
@@ -22,7 +28,14 @@ export async function GET(_request: NextRequest) {
     ] = await Promise.all([
       prisma.order.count({ where: { status: 'PENDING' } }),
       prisma.order.count({ where: { status: 'PROCESSING' } }),
-      prisma.order.count({ where: { OR: [{ paymentStatus: 'FAILED' }, { status: 'CANCELLED' }, { status: 'RETURNED' }] } }),
+      prisma.order.count({
+        where: {
+          OR: [
+            { paymentStatus: 'FAILED' },
+            { status: { in: issueStatuses } },
+          ],
+        },
+      }),
       prisma.order.aggregate({
         _sum: { total: true },
         where: { createdAt: { gte: startOfToday }, paymentStatus: 'PAID' },
@@ -31,23 +44,19 @@ export async function GET(_request: NextRequest) {
       prisma.order.groupBy({ by: ['status'], _count: { status: true } }),
     ])
 
-    type StatusGroup = (typeof statusGroups)[number]
-
     const statusCounts = statusGroups.reduce(
-      (acc: Record<string, number>, statusGroup: StatusGroup) => {
-        acc[statusGroup.status] = statusGroup._count.status
+      (acc: Record<string, number>, s) => {
+        acc[s.status] = s._count.status
         return acc
       },
       {}
     )
 
     return NextResponse.json({
-      // Header tiles
       pending: pendingCount,
       processing: processingCount,
       issues: issuesCount,
       todaysRevenue: Number(todaysRevenueAgg._sum.total || 0),
-      // Summary tiles used by AdminOrdersStats
       totalOrders: totalOrdersCount,
       pendingOrders: statusCounts['PENDING'] || 0,
       completedOrders: statusCounts['DELIVERED'] || 0,
