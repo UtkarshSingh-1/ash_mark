@@ -56,7 +56,11 @@ export async function POST(request: NextRequest) {
     })
 
     // Mark promo usage if applicable
-    if (order.promoCode && order.discount && order.discount > 0) {
+    if (
+      order.promoCode &&
+      order.discount &&
+      Number(order.discount) > 0 // ✅ Fixed Decimal comparison
+    ) {
       await prisma.promoCodeUsage.create({
         data: {
           code: order.promoCode,
