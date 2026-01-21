@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
         where: {
           OR: [
             { paymentStatus: 'FAILED' },
-            { status: { in: issueStatuses } },
+            { status: { in: [...issueStatuses] } }, // ✅ FIXED HERE
           ],
         },
       }),
