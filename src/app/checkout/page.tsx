@@ -16,8 +16,13 @@ import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import {EligiblePromoList} from "@/components/checkout/eligible-promo-list"
-import { PromoCodeDefinition } from "@/lib/promo-codes"
+// import { EligiblePromoList, PromoDisplay } from "@/components/checkout/EligiblePromoList" // temporarily commented out due to missing module
+
+type PromoDisplay = {
+  code: string;
+  description: string;
+  discount: number;
+}
 
 export default function CheckoutPage() {
   const { data: session } = useSession()
@@ -47,7 +52,7 @@ export default function CheckoutPage() {
   const [applyingPromo, setApplyingPromo] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online")
 
-  const [allPromos, setAllPromos] = useState<PromoCodeDefinition[]>([])
+  const [allPromos, setAllPromos] = useState<PromoDisplay[]>([])
   const [isNewUser, setIsNewUser] = useState(false)
 
   const subtotal = useMemo(
@@ -75,7 +80,15 @@ export default function CheckoutPage() {
     try {
       const promoRes = await fetch("/api/promo-codes/list")
       const promoData = await promoRes.json()
-      setAllPromos(promoData.promoCodes || [])
+
+      const formatted: PromoDisplay[] = (promoData.promoCodes || []).map((p: any) => ({
+        code: p.code,
+        description: p.description,
+        eligible: p.eligible,
+        reasons: p.reasons ?? [],
+      }))
+
+      setAllPromos(formatted)
 
       const userRes = await fetch("/api/profile")
       const user = await userRes.json()
@@ -173,7 +186,6 @@ export default function CheckoutPage() {
         return
       }
 
-      // Online Payment
       const orderRes = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -260,14 +272,19 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
-                  {/* Promo Eligibility Box */}
+                  {/* TODO: Fix: 'EligiblePromoList' is not defined or imported 
                   <EligiblePromoList
                     items={allPromos}
                     subtotal={subtotal}
                     isNewUser={isNewUser}
                   />
+                  */}
+                  
+                  {/* For now, inform the user or developer */}
+                  <div className="p-4 bg-yellow-100 text-yellow-800 rounded mb-2">
+                    Available promos will be shown here once implemented.
+                  </div>
 
-                  {/* Promo Input */}
                   {!appliedPromoCode ? (
                     <div className="flex gap-2">
                       <Input
