@@ -16,18 +16,19 @@ import { useCart } from "@/contexts/cart-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-// import { EligiblePromoList, PromoDisplay } from "@/components/checkout/EligiblePromoList" // temporarily commented out due to missing module
+import { EligiblePromoList } from "@/components/checkout/eligible-promo-list"
 
 type PromoDisplay = {
-  code: string;
-  description: string;
-  discount: number;
+  code: string
+  description: string
+  eligible: boolean
+  reasons: string[]
 }
 
 export default function CheckoutPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const { error, isLoading, Razorpay } = useRazorpay()
+  const { error, Razorpay } = useRazorpay()
   const { cartItems, clearCart } = useCart()
 
   type Address = {
@@ -44,35 +45,32 @@ export default function CheckoutPage() {
 
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
-
   const [processing, setProcessing] = useState(false)
+
   const [promoCode, setPromoCode] = useState("")
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null)
   const [discount, setDiscount] = useState(0)
   const [applyingPromo, setApplyingPromo] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online")
 
   const [allPromos, setAllPromos] = useState<PromoDisplay[]>([])
   const [isNewUser, setIsNewUser] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online")
 
   const subtotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0),
     [cartItems]
   )
+
   const shipping = subtotal > 1000 ? 0 : 100
   const orderTotal = subtotal + shipping - discount
 
   const fetchAddresses = useCallback(async () => {
-    try {
-      const response = await fetch("/api/addresses")
-      if (response.ok) {
-        const data: { addresses: Address[] } = await response.json()
-        setAddresses(data.addresses)
-        const defaultAddress = data.addresses.find(a => a.isDefault)
-        if (defaultAddress) setSelectedAddress(defaultAddress)
-      }
-    } catch (e) {
-      console.error("Address fetch error:", e)
+    const response = await fetch("/api/addresses")
+    if (response.ok) {
+      const data: { addresses: Address[] } = await response.json()
+      setAddresses(data.addresses)
+      const defaultAddress = data.addresses.find(a => a.isDefault)
+      if (defaultAddress) setSelectedAddress(defaultAddress)
     }
   }, [])
 
@@ -100,15 +98,15 @@ export default function CheckoutPage() {
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
-      toast({
+      return toast({
         title: "Promo Code Required",
         description: "Enter a promo code first",
         variant: "destructive",
       })
-      return
     }
 
     setApplyingPromo(true)
+
     try {
       const response = await fetch("/api/promo-codes/validate", {
         method: "POST",
@@ -119,8 +117,7 @@ export default function CheckoutPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        toast({ title: "Invalid Promo Code", description: data.error, variant: "destructive" })
-        return
+        return toast({ title: "Invalid Promo Code", description: data.error, variant: "destructive" })
       }
 
       setAppliedPromoCode(data.code)
@@ -143,22 +140,16 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     if (!selectedAddress) {
-      toast({
+      return toast({
         title: "Address Required",
         description: "Please select a delivery address",
         variant: "destructive",
       })
-      return
     }
 
     if (cartItems.length === 0) {
-      toast({
-        title: "Cart Empty",
-        description: "Your cart is empty, add products again.",
-        variant: "destructive",
-      })
-      router.push("/cart")
-      return
+      toast({ title: "Cart Empty", description: "Your cart is empty", variant: "destructive" })
+      return router.push("/cart")
     }
 
     setProcessing(true)
@@ -177,13 +168,11 @@ export default function CheckoutPage() {
         })
 
         const codData = await codRes.json()
-
         if (!codRes.ok) throw new Error(codData.error)
 
         clearCart()
         toast({ title: "Order Placed", description: "COD order confirmed!" })
-        router.push(`/orders/${codData.orderId}`)
-        return
+        return router.push(`/orders/${codData.orderId}`)
       }
 
       const orderRes = await fetch("/api/payments/create-order", {
@@ -206,19 +195,11 @@ export default function CheckoutPage() {
         currency: orderData.currency,
         order_id: orderData.razorpayOrderId,
         name: "ASHMARK",
-        prefill: {
-          name: session?.user?.name || "",
-          email: session?.user?.email || "",
-          contact: selectedAddress?.phone || "",
-        },
         handler: async (response: any) => {
           const verifyRes = await fetch("/api/payments/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...response,
-              orderId: orderData.orderId,
-            }),
+            body: JSON.stringify({ ...response, orderId: orderData.orderId }),
           })
 
           if (verifyRes.ok) {
@@ -231,11 +212,7 @@ export default function CheckoutPage() {
         },
       }).open()
     } catch (err: any) {
-      toast({
-        title: "Payment Failed",
-        description: err?.message ?? "Something went wrong",
-        variant: "destructive",
-      })
+      toast({ title: "Payment Failed", description: err?.message ?? "Something went wrong", variant: "destructive" })
     } finally {
       setProcessing(false)
     }
@@ -257,12 +234,12 @@ export default function CheckoutPage() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <AddressForm
-                addresses={addresses}
-                selectedAddress={selectedAddress}
-                onAddressSelect={setSelectedAddress}
-                onAddressUpdate={fetchAddresses}
-              />
+            <AddressForm
+  selectedAddress={selectedAddress}
+  onAddressSelectAction={(addr) => setSelectedAddress(addr)}
+  onAddressUpdateAction={fetchAddresses}
+/>
+
             </div>
 
             <div>
@@ -272,18 +249,15 @@ export default function CheckoutPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
 
-                  {/* TODO: Fix: 'EligiblePromoList' is not defined or imported 
                   <EligiblePromoList
                     items={allPromos}
                     subtotal={subtotal}
                     isNewUser={isNewUser}
+                    onApply={(code) => {
+                      setPromoCode(code)
+                      handleApplyPromoCode()
+                    }}
                   />
-                  */}
-                  
-                  {/* For now, inform the user or developer */}
-                  <div className="p-4 bg-yellow-100 text-yellow-800 rounded mb-2">
-                    Available promos will be shown here once implemented.
-                  </div>
 
                   {!appliedPromoCode ? (
                     <div className="flex gap-2">
@@ -331,7 +305,9 @@ export default function CheckoutPage() {
                     </div>
 
                     <Button className="w-full" onClick={handlePayment} disabled={processing}>
-                      {processing ? "Processing..." : paymentMethod === "cod" ? "Place COD Order" : `Pay ${formatPrice(orderTotal)}`}
+                      {processing ? "Processing..." : paymentMethod === "cod"
+                        ? "Place COD Order"
+                        : `Pay ${formatPrice(orderTotal)}`}
                     </Button>
 
                     {error && paymentMethod === "online" && (

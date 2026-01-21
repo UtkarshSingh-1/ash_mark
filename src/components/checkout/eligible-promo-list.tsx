@@ -14,7 +14,9 @@ interface EligiblePromoListProps {
   items: PromoDisplay[]
   subtotal: number
   isNewUser: boolean
+  onApply?: (code: string) => void
 }
+
 
 export function EligiblePromoList({ items, subtotal, isNewUser }: EligiblePromoListProps) {
   if (!items || items.length === 0) return null
