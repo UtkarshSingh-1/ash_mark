@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { formatPrice, formatDate } from "@/lib/utils"
-import { Package, MapPin, User, Clock, Truck } from "lucide-react"
+import { Package, MapPin, User, Clock, Truck, RefreshCcw, RotateCcw, XCircle } from "lucide-react"
 import Image from "next/image"
 
 interface AdminOrderDetailsProps {
@@ -14,10 +14,25 @@ interface AdminOrderDetailsProps {
     subtotal: number
     tax: number
     shipping: number
+    discount?: number | null
+    promoCode?: string | null
+
     createdAt: string
     updatedAt: string
     razorpayOrderId?: string | null
     razorpayPaymentId?: string | null
+
+    shippedAt?: string | null
+    deliveredAt?: string | null
+    cancelledAt?: string | null
+
+    trackingId?: string | null
+    courierName?: string | null
+    trackingUrl?: string | null
+
+    returnStatus?: string
+    exchangeStatus?: string
+
     items: Array<{
       id: string
       quantity: number
@@ -34,6 +49,7 @@ interface AdminOrderDetailsProps {
         }
       }
     }>
+
     shippingAddress: {
       name: string
       phone: string
@@ -43,6 +59,7 @@ interface AdminOrderDetailsProps {
       pincode: string
       country: string
     } | null
+
     user: {
       id: string
       name: string | null
@@ -53,23 +70,26 @@ interface AdminOrderDetailsProps {
 }
 
 export function AdminOrderDetails({ order }: AdminOrderDetailsProps) {
-  const getStatusColor = (status: string, paymentStatus: string) => {
-    if (paymentStatus === 'FAILED') return 'bg-red-600'
-    if (status === 'DELIVERED') return 'bg-green-600'
-    if (status === 'SHIPPED') return 'bg-purple-600'
-    if (status === 'PROCESSING') return 'bg-yellow-600'
-    if (status === 'CONFIRMED') return 'bg-blue-600'
-    if (status === 'CANCELLED') return 'bg-red-600'
-    if (status === 'RETURNED') return 'bg-orange-600'
-    return 'bg-gray-600'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "DELIVERED": return "bg-green-600"
+      case "SHIPPED": return "bg-purple-600"
+      case "PROCESSING": return "bg-yellow-600"
+      case "CONFIRMED": return "bg-blue-600"
+      case "PENDING": return "bg-gray-600"
+      case "CANCELLED": return "bg-red-600"
+      case "RETURNED": return "bg-orange-600"
+      default: return "bg-gray-600"
+    }
   }
 
   return (
     <div className="space-y-6">
-      {/* Order Header */}
+
+      {/* ORDER HEADER */}
       <Card className="border-0 shadow-md">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Package className="w-6 h-6" />
@@ -77,22 +97,19 @@ export function AdminOrderDetails({ order }: AdminOrderDetailsProps) {
               </CardTitle>
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  Placed: {formatDate(new Date(order.createdAt))}
+                  <Clock className="w-4 h-4" /> Placed: {formatDate(new Date(order.createdAt))}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Truck className="w-4 h-4" />
-                  Updated: {formatDate(new Date(order.updatedAt))}
+                  <Truck className="w-4 h-4" /> Updated: {formatDate(new Date(order.updatedAt))}
                 </div>
               </div>
             </div>
+
             <div className="text-right">
               <div className="text-2xl font-bold mb-2">{formatPrice(Number(order.total))}</div>
-              <div className="flex gap-2">
-                <Badge className={`border-0 ${getStatusColor(order.status, order.paymentStatus)}`}>
-                  {order.status}
-                </Badge>
-                <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'} className="border-0">
+              <div className="flex gap-2 justify-end">
+                <Badge className={`border-0 ${getStatusColor(order.status)}`}>{order.status}</Badge>
+                <Badge variant={order.paymentStatus === "PAID" ? "default" : "secondary"} className="border-0">
                   {order.paymentStatus}
                 </Badge>
               </div>
@@ -101,133 +118,152 @@ export function AdminOrderDetails({ order }: AdminOrderDetailsProps) {
         </CardHeader>
       </Card>
 
-      {/* Order Items */}
+      {/* TRACKING & LOGISTICS */}
+      {(order.trackingId || order.courierName || order.deliveredAt || order.cancelledAt) && (
+        <Card className="border-0 shadow-md">
+          <CardHeader>
+            <CardTitle>Shipping & Tracking</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+
+            {order.courierName && (
+              <div><strong>Courier:</strong> {order.courierName}</div>
+            )}
+
+            {order.trackingId && (
+              <div><strong>Tracking ID:</strong> {order.trackingId}</div>
+            )}
+
+            {order.trackingUrl && (
+              <div>
+                <strong>Tracking URL:</strong>
+                <a href={order.trackingUrl} target="_blank" className="text-blue-600 underline ml-1">
+                  Track Package
+                </a>
+              </div>
+            )}
+
+            {order.shippedAt && (
+              <div><strong>Shipped At:</strong> {formatDate(new Date(order.shippedAt))}</div>
+            )}
+
+            {order.deliveredAt && (
+              <div><strong>Delivered At:</strong> {formatDate(new Date(order.deliveredAt))}</div>
+            )}
+
+            {order.cancelledAt && (
+              <div className="text-red-600 flex items-center gap-1">
+                <XCircle className="w-4 h-4" />
+                <span><strong>Cancelled At:</strong> {formatDate(new Date(order.cancelledAt))}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* RETURN / EXCHANGE */}
+      {(order.returnStatus !== "NONE" || order.exchangeStatus !== "NONE") && (
+        <Card className="border-0 shadow-md">
+          <CardHeader>
+            <CardTitle>Return / Exchange</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+
+            {order.returnStatus !== "NONE" && (
+              <div className="flex items-center gap-2">
+                <RotateCcw className="w-4 h-4" /> <strong>Return:</strong> {order.returnStatus}
+              </div>
+            )}
+
+            {order.exchangeStatus !== "NONE" && (
+              <div className="flex items-center gap-2">
+                <RefreshCcw className="w-4 h-4" /> <strong>Exchange:</strong> {order.exchangeStatus}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ORDER ITEMS */}
       <Card className="border-0 shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            Order Items ({order.items.length} items)
-          </CardTitle>
+          <CardTitle>Order Items ({order.items.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex gap-4 p-4 bg-muted/30">
-                <Image
-                  src={item.product.images[0] || '/placeholder-product.jpg'}
-                  alt={item.product.name}
-                  width={80}
-                  height={80}
-                  className="object-cover"
-                />
-                <div className="flex-1">
-                  <h4 className="font-medium">{item.product.name}</h4>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Category: {item.product.category.name}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span>Quantity: {item.quantity}</span>
-                    {item.size && <Badge variant="outline" className="border-0 bg-background">Size: {item.size}</Badge>}
-                    {item.color && <Badge variant="outline" className="border-0 bg-background">Color: {item.color}</Badge>}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Product ID: {item.product.id}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{formatPrice(Number(item.price) * item.quantity)}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatPrice(Number(item.price))} each
-                  </div>
-                </div>
+        <CardContent className="space-y-4">
+          {order.items.map(item => (
+            <div key={item.id} className="flex gap-4 p-4 bg-muted/30 rounded-md">
+              <Image
+                src={item.product.images[0] || "/placeholder-product.jpg"}
+                alt={item.product.name}
+                width={80}
+                height={80}
+                className="object-cover rounded"
+              />
+              <div className="flex-1">
+                <h4 className="font-medium">{item.product.name}</h4>
+                <p className="text-sm text-muted-foreground">
+                  Category: {item.product.category.name}
+                </p>
+                <p className="text-sm mt-1">Qty: {item.quantity}</p>
+                <p className="text-sm">{formatPrice(Number(item.price))} each</p>
               </div>
-            ))}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Order Summary */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal</span>
-              <span>{formatPrice(Number(order.subtotal))}</span>
+              <div className="text-right font-semibold">
+                {formatPrice(Number(item.price) * item.quantity)}
+              </div>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Shipping</span>
-              <span>{Number(order.shipping) === 0 ? 'Free' : formatPrice(Number(order.shipping))}</span>
-            </div>
+          ))}
+
+          <Separator />
+
+          {/* SUMMARY */}
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between"><span>Subtotal:</span> <span>{formatPrice(order.subtotal)}</span></div>
+            <div className="flex justify-between"><span>Shipping:</span> <span>{order.shipping === 0 ? "Free" : formatPrice(order.shipping)}</span></div>
+            {order.discount && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount:</span> <span>-{formatPrice(order.discount)}</span>
+              </div>
+            )}
             <Separator />
             <div className="flex justify-between font-semibold text-lg">
-              <span>Total</span>
-              <span>{formatPrice(Number(order.total))}</span>
+              <span>Total:</span> <span>{formatPrice(order.total)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Customer & Shipping Info */}
+      {/* CUSTOMER & SHIPPING */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* CUSTOMER */}
         <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Customer Information
-            </CardTitle>
+            <CardTitle>User Info</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Image
-                src={order.user.image || '/default-avatar.png'}
-                alt={order.user.name || 'Customer'}
-                width={40}
-                height={40}
-                className="object-cover"
-              />
-              <div>
-                <div className="font-medium">{order.user.name || 'N/A'}</div>
-                <div className="text-sm text-muted-foreground">{order.user.email}</div>
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">Customer ID:</span> {order.user.id}
-              </div>
-              {order.razorpayPaymentId && (
-                <div>
-                  <span className="font-medium">Payment ID:</span> {order.razorpayPaymentId}
-                </div>
-              )}
-              {order.razorpayOrderId && (
-                <div>
-                  <span className="font-medium">Razorpay Order ID:</span> {order.razorpayOrderId}
-                </div>
-              )}
-            </div>
+          <CardContent className="text-sm space-y-2">
+            <div><strong>Name:</strong> {order.user.name ?? "N/A"}</div>
+            <div><strong>Email:</strong> {order.user.email}</div>
+            {order.razorpayPaymentId && (
+              <div><strong>Payment ID:</strong> {order.razorpayPaymentId}</div>
+            )}
           </CardContent>
         </Card>
 
+        {/* SHIPPING ADDRESS */}
         <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Shipping Address
-            </CardTitle>
+            <CardTitle>Shipping Address</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="text-sm space-y-1">
             {order.shippingAddress ? (
-              <div className="space-y-1 text-sm">
-                <div className="font-medium text-base">{order.shippingAddress.name}</div>
+              <>
+                <div>{order.shippingAddress.name}</div>
                 <div>{order.shippingAddress.street}</div>
-                <div>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.pincode}</div>
+                <div>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</div>
                 <div>{order.shippingAddress.country}</div>
-                <Separator className="my-2" />
-                <div><span className="font-medium">Phone:</span> {order.shippingAddress.phone}</div>
-              </div>
+                <div><strong>Phone:</strong> {order.shippingAddress.phone}</div>
+              </>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                No shipping address provided
-              </div>
+              <div className="text-muted-foreground">No shipping address found</div>
             )}
           </CardContent>
         </Card>

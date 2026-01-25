@@ -1,37 +1,107 @@
-'use client'
+"use client";
 
-type Props = {
-  orderId: string | number
-  onCloseAction: () => void
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
+
+export interface ExchangeItemData {
+  id: string;         // orderItemId
+  orderId: string;
+  productName: string;
+  availableSizes: string[];
 }
 
-export default function ExchangeModal({ orderId, onCloseAction }: Props) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-md p-6 max-w-sm w-full shadow-xl">
-        <h2 className="text-lg font-semibold mb-2">Exchange Order</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          You are requesting an exchange for order <strong>{orderId}</strong>.
-        </p>
+interface ExchangeModalProps {
+  open: boolean;
+  onCloseAction: () => void;
+  item: ExchangeItemData | null;
+}
 
-        <div className="flex justify-end gap-2">
-          <button
-            className="btn bg-gray-200 px-3 py-1 rounded"
-            onClick={onCloseAction}
-          >
-            Cancel
-          </button>
-          <button
-            className="btn bg-blue-500 text-white px-3 py-1 rounded"
-            onClick={() => {
-              // TODO: add logic here
-              onCloseAction()
-            }}
-          >
-            Confirm Exchange
-          </button>
+export function ExchangeModal({ open, onCloseAction, item }: ExchangeModalProps) {
+  const [reason, setReason] = useState("");
+  const [newSize, setNewSize] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  if (!item) return null;
+
+  const submit = async () => {
+    if (!newSize) {
+      toast({ title: "Required", description: "Please select a new size", variant: "destructive" });
+      return;
+    }
+
+    if (!reason.trim()) {
+      toast({ title: "Required", description: "Please provide a reason", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${item.orderId}/exchange`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: item.id,
+          newSize,
+          reason,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      toast({ title: "Exchange Requested", description: "Your exchange request was submitted." });
+      onCloseAction();
+    } catch {
+      toast({ title: "Error", description: "Unable to submit exchange request", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onCloseAction}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Exchange Item</DialogTitle>
+        </DialogHeader>
+
+        <div className="font-semibold">{item.productName}</div>
+
+        <div className="mt-3">
+          <label className="text-sm font-medium">Select New Size:</label>
+          <Select onValueChange={setNewSize}>
+            <SelectTrigger className="mt-1">
+              {newSize ?? "Select Size"}
+            </SelectTrigger>
+            <SelectContent>
+              {item.availableSizes.map((size) => (
+                <SelectItem key={size} value={size}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </div>
-    </div>
-  )
+
+        <Textarea
+          className="mt-3"
+          placeholder="Reason for exchange..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+
+        <div className="flex gap-2 mt-4">
+          <Button className="w-full" disabled={loading} onClick={submit}>
+            {loading ? "Submitting..." : "Submit Request"}
+          </Button>
+          <Button variant="outline" className="w-full" onClick={onCloseAction}>
+            Cancel
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

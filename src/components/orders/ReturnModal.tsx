@@ -1,37 +1,81 @@
-'use client'
+"use client";
 
-type Props = {
-  orderId: string | number
-  onCloseAction: () => void
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
+
+export interface ReturnItemData {
+  id: string;        // orderItemId
+  orderId: string;
+  productName: string;
 }
 
-export default function ReturnModal({ orderId, onCloseAction }: Props) {
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-md p-6 max-w-sm w-full shadow-xl">
-        <h2 className="text-lg font-semibold mb-2">Return Order</h2>
-        <p className="text-sm text-gray-600 mb-4">
-          You are requesting a return for order <strong>{orderId}</strong>.
-        </p>
+interface ReturnModalProps {
+  open: boolean;
+  onCloseAction: () => void;
+  item: ReturnItemData | null;
+}
 
-        <div className="flex justify-end gap-2">
-          <button
-            className="btn bg-gray-200 px-3 py-1 rounded"
-            onClick={onCloseAction}
-          >
+export function ReturnModal({ open, onCloseAction, item }: ReturnModalProps) {
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!item) return null;
+
+  const submit = async () => {
+    if (!reason.trim()) {
+      toast({ title: "Required", description: "Please provide a reason", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${item.orderId}/return`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: item.id,
+          reason,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      toast({ title: "Return Requested", description: "Your return request was submitted." });
+      onCloseAction();
+    } catch {
+      toast({ title: "Error", description: "Unable to submit return request", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onCloseAction}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Return Item</DialogTitle>
+        </DialogHeader>
+
+        <div className="mb-4 font-semibold">{item.productName}</div>
+
+        <Textarea
+          placeholder="Reason for return..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+
+        <div className="flex gap-2 mt-4">
+          <Button className="w-full" disabled={loading} onClick={submit}>
+            {loading ? "Submitting..." : "Submit Request"}
+          </Button>
+          <Button variant="outline" className="w-full" onClick={onCloseAction}>
             Cancel
-          </button>
-          <button
-            className="btn bg-red-500 text-white px-3 py-1 rounded"
-            onClick={() => {
-              // TODO: add logic here
-              onCloseAction()
-            }}
-          >
-            Confirm Return
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
-  )
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -148,13 +148,17 @@ export default function CheckoutPage() {
     }
 
     if (cartItems.length === 0) {
-      toast({ title: "Cart Empty", description: "Your cart is empty", variant: "destructive" })
-      return router.push("/cart")
+      return toast({
+        title: "Cart Empty",
+        description: "Your cart is empty",
+        variant: "destructive",
+      })
     }
 
     setProcessing(true)
 
     try {
+      // COD Flow
       if (paymentMethod === "cod") {
         const codRes = await fetch("/api/payments/create-order", {
           method: "POST",
@@ -172,9 +176,11 @@ export default function CheckoutPage() {
 
         clearCart()
         toast({ title: "Order Placed", description: "COD order confirmed!" })
+
         return router.push(`/orders/${codData.orderId}`)
       }
 
+      // Online Payment Flow
       const orderRes = await fetch("/api/payments/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,30 +195,48 @@ export default function CheckoutPage() {
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.error)
 
-      new Razorpay({
+      const rzp = new Razorpay({
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
         amount: orderData.amount,
         currency: orderData.currency,
         order_id: orderData.razorpayOrderId,
         name: "ASHMARK",
         handler: async (response: any) => {
-          const verifyRes = await fetch("/api/payments/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, orderId: orderData.orderId }),
-          })
+          try {
+            const verifyRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...response, orderId: orderData.orderId }),
+            })
 
-          if (verifyRes.ok) {
+            if (!verifyRes.ok) {
+              toast({ title: "Verification Failed", variant: "destructive" })
+              return
+            }
+
             clearCart()
-            toast({ title: "Payment Successful", description: "Order placed!" })
+            toast({ title: "Payment Successful", description: "Order placed successfully!" })
             router.push(`/orders/${orderData.orderId}`)
-          } else {
-            toast({ title: "Verification Failed", variant: "destructive" })
+
+          } catch {
+            toast({ title: "Payment Verification Failed", variant: "destructive" })
           }
         },
-      }).open()
+        theme: { color: "#dc2626" },
+      })
+
+      rzp.on("payment.failed", () => {
+        toast({
+          title: "Payment Failed",
+          description: "Your transaction was not completed.",
+          variant: "destructive",
+        })
+      })
+
+      rzp.open()
+
     } catch (err: any) {
-      toast({ title: "Payment Failed", description: err?.message ?? "Something went wrong", variant: "destructive" })
+      toast({ title: "Payment Error", description: err?.message || "Something went wrong", variant: "destructive" })
     } finally {
       setProcessing(false)
     }
@@ -220,10 +244,13 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!session) return router.push("/login")
-    if (cartItems.length === 0) return router.push("/cart")
+
+    // ⛔ DO NOT redirect to cart on `cartItems.length === 0` after checkout
+    if (cartItems.length === 0) return
+
     fetchAddresses()
     fetchPromoDetails()
-  }, [session, cartItems])
+  }, [session])
 
   return (
     <>
@@ -234,12 +261,11 @@ export default function CheckoutPage() {
 
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-            <AddressForm
-  selectedAddress={selectedAddress}
-  onAddressSelectAction={(addr) => setSelectedAddress(addr)}
-  onAddressUpdateAction={fetchAddresses}
-/>
-
+              <AddressForm
+                selectedAddress={selectedAddress}
+                onAddressSelectAction={(addr) => setSelectedAddress(addr)}
+                onAddressUpdateAction={fetchAddresses}
+              />
             </div>
 
             <div>
@@ -291,8 +317,7 @@ export default function CheckoutPage() {
                       <Label>Payment Method</Label>
                       <RadioGroup
                         value={paymentMethod}
-                        onValueChange={(v) => setPaymentMethod(v as "online" | "cod")}
-                      >
+                        onValueChange={(v) => setPaymentMethod(v as "online" | "cod")}>
                         <div className="flex items-center gap-2">
                           <RadioGroupItem value="online" id="online" />
                           <Label htmlFor="online">Online Payment</Label>
@@ -314,6 +339,7 @@ export default function CheckoutPage() {
                       <p className="text-sm text-red-600">Payment gateway failed to load.</p>
                     )}
                   </div>
+
                 </CardContent>
               </Card>
             </div>

@@ -31,12 +31,17 @@ interface Address {
 
 interface EditAddressDialogProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChangeAction: (open: boolean) => void
   address: Address | null
-  onSave: () => void
+  onSaveAction: () => void
 }
 
-export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditAddressDialogProps) {
+export function EditAddressDialog({
+  open,
+  onOpenChangeAction,
+  address,
+  onSaveAction,
+}: EditAddressDialogProps) {
   const [formData, setFormData] = useState({
     name: address?.name || "",
     phone: address?.phone || "",
@@ -45,7 +50,7 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
     state: address?.state || "",
     pincode: address?.pincode || "",
     country: "India",
-    type: address?.type || "home" as 'home' | 'work' | 'other',
+    type: (address?.type || "home") as 'home' | 'work' | 'other',
     isDefault: address?.isDefault || false,
   })
 
@@ -77,17 +82,12 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
     }
 
     try {
-      const url = address 
-        ? `/api/addresses/${address.id}`
-        : '/api/addresses'
-
+      const url = address ? `/api/addresses/${address.id}` : '/api/addresses'
       const method = address ? 'PUT' : 'POST'
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
@@ -96,11 +96,11 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
           title: "Success",
           description: address ? "Address updated successfully" : "Address added successfully",
         })
-        onSave()
+        onSaveAction()
       } else {
         throw new Error('Failed to save address')
       }
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save address",
@@ -110,26 +110,25 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent className="border-0 max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {address ? 'Edit Address' : 'Add New Address'}
-          </DialogTitle>
+          <DialogTitle>{address ? 'Edit Address' : 'Add New Address'}</DialogTitle>
           <DialogDescription>
             {address ? 'Update your address details' : 'Add a new delivery address'}
           </DialogDescription>
         </DialogHeader>
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={formData.name}
                   maxLength={25}
+                  value={formData.name}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^A-Za-z\s]/g, "")
                     setFormData({ ...formData, name: value })
@@ -138,7 +137,7 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
                   className="border-0"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -156,8 +155,13 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Address Type</Label>
-              <Select value={formData.type} onValueChange={(value: 'home' | 'work' | 'other') => setFormData({ ...formData, type: value })}>
+              <Label>Address Type</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value: 'home' | 'work' | 'other') =>
+                  setFormData({ ...formData, type: value })
+                }
+              >
                 <SelectTrigger className="border-0">
                   <SelectValue />
                 </SelectTrigger>
@@ -201,7 +205,7 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
                   <SelectTrigger className="border-0">
                     <SelectValue placeholder="Select State" />
                   </SelectTrigger>
-                  <SelectContent className="border-0">
+                  <SelectContent className="border-0 max-h-60 overflow-y-auto">
                     {INDIAN_STATES.map((state) => (
                       <SelectItem key={state} value={state}>
                         {state}
@@ -217,8 +221,8 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
                 <Label htmlFor="pincode">PIN Code</Label>
                 <Input
                   id="pincode"
-                  value={formData.pincode}
                   maxLength={6}
+                  value={formData.pincode}
                   onChange={(e) => {
                     const value = e.target.value.replace(/[^0-9]/g, "")
                     setFormData({ ...formData, pincode: value })
@@ -244,7 +248,7 @@ export function EditAddressDialog({ open, onOpenChange, address, onSave }: EditA
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => onOpenChangeAction(false)}
               className="border-0"
             >
               Cancel

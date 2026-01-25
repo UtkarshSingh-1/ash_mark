@@ -1,6 +1,8 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Circle, Package, Truck, MapPin, Clock } from "lucide-react"
+import { Clock, Package, Truck, CheckCircle, MapPin, RotateCcw, RefreshCcw, XCircle } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 interface AdminOrderTimelineProps {
@@ -10,53 +12,136 @@ interface AdminOrderTimelineProps {
     paymentStatus: string
     createdAt: string
     updatedAt: string
+
+    // optional event timestamps
+    shippedAt?: string | null
+    outForDeliveryAt?: string | null
+    deliveredAt?: string | null
+    cancelledAt?: string | null
+    completedAt?: string | null
+    returnStatus?: string
+    exchangeStatus?: string
   }
 }
 
 export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
-  // In real app, fetch actual timeline events from database
-  const timelineEvents = [
+  const baseTimeline = [
     {
-      status: 'PENDING',
-      title: 'Order Placed',
-      description: 'Customer placed the order and payment is being processed',
+      status: "PENDING",
+      title: "Order Placed",
+      description: "Order has been placed by customer",
       timestamp: order.createdAt,
-      completed: true,
-      icon: CheckCircle,
-    },
-    {
-      status: 'CONFIRMED',
-      title: 'Order Confirmed',
-      description: 'Payment confirmed and order is ready for processing',
-      timestamp: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // +30 min
-      completed: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status),
-      icon: CheckCircle,
-    },
-    {
-      status: 'PROCESSING',
-      title: 'Processing',
-      description: 'Order is being packed and prepared for shipment',
-      timestamp: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // +1 day
-      completed: ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status),
       icon: Package,
     },
     {
-      status: 'SHIPPED',
-      title: 'Shipped',
-      description: 'Order has been shipped and is on its way to customer',
-      timestamp: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // +2 days
-      completed: ['SHIPPED', 'DELIVERED'].includes(order.status),
+      status: "CONFIRMED",
+      title: "Order Confirmed",
+      description: "Order has been confirmed",
+      icon: CheckCircle,
+    },
+    {
+      status: "PROCESSING",
+      title: "Processing",
+      description: "Order is being prepared",
+      icon: Package,
+    },
+    {
+      status: "SHIPPED",
+      title: "Shipped",
+      description: "Order left warehouse",
+      timestamp: order.shippedAt || null,
       icon: Truck,
     },
     {
-      status: 'DELIVERED',
-      title: 'Delivered',
-      description: 'Order has been successfully delivered to customer',
-      timestamp: new Date(Date.now() + 120 * 60 * 60 * 1000).toISOString(), // +5 days
-      completed: order.status === 'DELIVERED',
+      status: "DELIVERED",
+      title: "Delivered",
+      description: "Order delivered to customer",
+      timestamp: order.deliveredAt || null,
       icon: MapPin,
     },
   ]
+
+  const returnTimeline = [
+    {
+      status: "RETURN_REQUESTED",
+      title: "Return Requested",
+      description: "Customer requested a return",
+      icon: RotateCcw,
+    },
+    {
+      status: "RETURN_APPROVED",
+      title: "Return Approved",
+      description: "Return request has been approved",
+      icon: CheckCircle,
+    },
+    {
+      status: "RETURNED",
+      title: "Returned",
+      description: "Item returned successfully",
+      icon: RotateCcw,
+    },
+  ]
+
+  const exchangeTimeline = [
+    {
+      status: "EXCHANGE_REQUESTED",
+      title: "Exchange Requested",
+      description: "Customer requested an exchange",
+      icon: RefreshCcw,
+    },
+    {
+      status: "EXCHANGE_APPROVED",
+      title: "Exchange Approved",
+      description: "Exchange approved and processing",
+      icon: CheckCircle,
+    },
+    {
+      status: "EXCHANGED",
+      title: "Exchanged",
+      description: "Item exchanged successfully",
+      icon: RefreshCcw,
+    },
+  ]
+
+  let finalTimeline: any[] = [...baseTimeline]
+
+  // Merge return / exchange states after DELIVERED
+  if (order.status.includes("RETURN")) {
+    finalTimeline = [...finalTimeline, ...returnTimeline]
+  }
+
+  if (order.status.includes("EXCHANGE")) {
+    finalTimeline = [...finalTimeline, ...exchangeTimeline]
+  }
+
+  // Cancelled case overrides everything
+  const isCancelled = order.status === "CANCELLED"
+  if (isCancelled) {
+    finalTimeline = [
+      baseTimeline[0], // Order Placed
+      {
+        status: "CANCELLED",
+        title: "Order Cancelled",
+        description: "The order was cancelled",
+        timestamp: order.cancelledAt || order.updatedAt,
+        icon: XCircle,
+      },
+    ]
+  }
+
+  // Mark completed states
+  const completedStatuses = new Set([
+    "CONFIRMED",
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
+    "RETURN_REQUESTED",
+    "RETURN_APPROVED",
+    "RETURNED",
+    "EXCHANGE_REQUESTED",
+    "EXCHANGE_APPROVED",
+    "EXCHANGED",
+  ])
 
   return (
     <Card className="border-0 shadow-md">
@@ -66,51 +151,52 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
           Order Timeline
         </CardTitle>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-6">
-          {timelineEvents.map((event, index) => {
+          {finalTimeline.map((event, index) => {
             const Icon = event.icon
-            const isCurrentStep = event.status === order.status
-            const isCompleted = event.completed
+            const isCurrent = event.status === order.status
+            const isCompleted = completedStatuses.has(event.status) || index < finalTimeline.findIndex(e => e.status === order.status)
 
             return (
               <div key={event.status} className="flex gap-4">
                 <div className="flex flex-col items-center">
-                  <div className={`p-3 ${
-                    isCompleted 
-                      ? 'bg-green-600' 
-                      : isCurrentStep 
-                        ? 'bg-yellow-600' 
-                        : 'bg-muted'
-                  } text-white`}>
+                  <div
+                    className={`p-3 rounded-full text-white ${
+                      isCompleted
+                        ? "bg-green-600"
+                        : isCurrent
+                          ? "bg-yellow-600"
+                          : "bg-gray-400"
+                    }`}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
-                  {index < timelineEvents.length - 1 && (
-                    <div className={`w-0.5 h-12 mt-2 ${
-                      isCompleted ? 'bg-green-600' : 'bg-muted'
-                    }`} />
+
+                  {index < finalTimeline.length - 1 && (
+                    <div
+                      className={`w-0.5 h-12 ${
+                        isCompleted ? "bg-green-600" : "bg-gray-300"
+                      }`}
+                    />
                   )}
                 </div>
+
                 <div className="flex-1 pb-8">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold">{event.title}</h4>
-                    {isCurrentStep && (
-                      <Badge className="bg-yellow-600 text-xs border-0">Current</Badge>
-                    )}
-                    {isCompleted && !isCurrentStep && (
-                      <Badge className="bg-green-600 text-xs border-0">Completed</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {event.description}
-                  </p>
-                  {(isCompleted || isCurrentStep) && (
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(new Date(event.timestamp))} at{' '}
-                      {new Date(event.timestamp).toLocaleTimeString('en-IN', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                  <h4 className="font-semibold flex items-center gap-2">
+                    {event.title}
+                    {isCurrent && <Badge className="bg-yellow-500 border-0">Current</Badge>}
+                    {isCompleted && !isCurrent && <Badge className="bg-green-600 border-0 text-white">Completed</Badge>}
+                  </h4>
+
+                  <p className="text-sm text-muted-foreground">{event.description}</p>
+
+                  {(event.timestamp || isCompleted || isCurrent) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {event.timestamp
+                        ? formatDate(new Date(event.timestamp))
+                        : formatDate(new Date(order.updatedAt))}
                     </p>
                   )}
                 </div>
@@ -119,31 +205,13 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
           })}
         </div>
 
-        {/* Additional Timeline Info */}
-        <div className="mt-6 p-4 bg-muted/30">
-          <h4 className="font-semibold mb-2">Timeline Information</h4>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div>Order Created: {formatDate(new Date(order.createdAt))}</div>
-            <div>Last Updated: {formatDate(new Date(order.updatedAt))}</div>
-            <div>Payment Status: {order.paymentStatus}</div>
-          </div>
+        {/* Additional Meta Info */}
+        <div className="mt-6 p-4 bg-muted/30 rounded-md text-sm space-y-1">
+          <div><strong>Order Created:</strong> {formatDate(new Date(order.createdAt))}</div>
+          <div><strong>Last Updated:</strong> {formatDate(new Date(order.updatedAt))}</div>
+          <div><strong>Status:</strong> {order.status}</div>
+          <div><strong>Payment:</strong> {order.paymentStatus}</div>
         </div>
-
-        {order.status === 'CANCELLED' && (
-          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400">
-            <div className="flex items-start gap-2">
-              <Circle className="w-5 h-5 text-red-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-red-800 dark:text-red-200">
-                  Order Cancelled
-                </h4>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                  This order was cancelled on {formatDate(new Date(order.updatedAt))}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

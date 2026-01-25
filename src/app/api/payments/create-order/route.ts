@@ -24,15 +24,11 @@ export async function POST(request: NextRequest) {
       paymentMethod,
     } = await request.json()
 
-    // Load cart items to create order items from real data
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: session.user.id },
       include: { product: true },
     })
 
-    type CartItemWithProduct = (typeof cartItems)[number]
-
-    // Guard against empty carts (can happen if client and DB go out of sync)
     if (cartItems.length === 0) {
       return NextResponse.json(
         { error: 'Your cart is empty. Please add items again.' },
@@ -40,19 +36,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Compute totals from cart to avoid hardcoded values
     const subtotal = cartItems.reduce(
-      (sum: number, item: CartItemWithProduct) => sum + Number(item.product.price) * item.quantity,
+      (sum, item) => sum + Number(item.product.price) * item.quantity,
       0
     )
-    const shipping = subtotal > 1000 ? 0 : (cartItems.length > 0 ? 100 : 0)
-    
-    // Validate and apply promo code if provided
+
+    const shipping = subtotal > 1000 ? 0 : 100
+
     let discount = 0
     let appliedPromoCode: string | null = null
-    
+
     if (promoCode) {
-      // Get user to check if they're a new user
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { createdAt: true },
@@ -60,8 +54,7 @@ export async function POST(request: NextRequest) {
 
       if (user) {
         const userIsNew = isNewUser(user.createdAt)
-        
-        // Check if user has already used this promo code
+
         const existingUsage = await prisma.promoCodeUsage.findUnique({
           where: {
             userId_code: {
@@ -78,9 +71,7 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Validate promo code
         const validation = validatePromoCode(promoCode, subtotal, userIsNew)
-        
         if (!validation.valid) {
           return NextResponse.json(
             { error: validation.error || 'Invalid promo code' },
@@ -93,12 +84,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const computedTotal = subtotal + shipping - discount
-
-    // If client sent amount, prefer computed to avoid tampering
-    const finalAmount = computedTotal
+    const finalAmount = subtotal + shipping - discount
     const normalizedPaymentMethod = paymentMethod === 'COD' ? 'COD' : 'ONLINE'
-    const orderItemsPayload = cartItems.map((ci: CartItemWithProduct) => ({
+
+    const orderItemsPayload = cartItems.map((ci) => ({
       productId: ci.productId,
       quantity: ci.quantity,
       price: Number(ci.product.price),
@@ -106,6 +95,7 @@ export async function POST(request: NextRequest) {
       color: ci.color || undefined,
     }))
 
+    // ---------- COD ORDER ----------
     if (normalizedPaymentMethod === 'COD') {
       const order = await prisma.order.create({
         data: {
@@ -121,56 +111,40 @@ export async function POST(request: NextRequest) {
           status: 'CONFIRMED',
           addressId,
           shippingAddressId: addressId,
-          items: {
-            create: orderItemsPayload,
-          },
+          items: { create: orderItemsPayload },
         },
       })
 
-      await prisma.cartItem.deleteMany({
-        where: { userId: session.user.id },
-      })
-
-      if (appliedPromoCode && discount > 0) {
-        await prisma.promoCodeUsage.create({
-          data: {
-            code: appliedPromoCode,
-            userId: session.user.id,
-            orderId: order.id,
-          },
-        })
-      }
+      await prisma.cartItem.deleteMany({ where: { userId: session.user.id } })
 
       return NextResponse.json({
+        success: true,
         orderId: order.id,
-        amount: finalAmount,
-        currency: 'INR',
-        paymentMethod: 'COD',
       })
     }
 
-    // Create Razorpay order
+    // ---------- ONLINE PAYMENT ----------
     const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(finalAmount * 100), // Convert to paise
+      amount: Math.round(finalAmount * 100),
       currency: 'INR',
       receipt: `order_${Date.now()}`,
     })
 
-    // Idempotent create/update: if idempotencyKey (orderId) provided, update it; else create new
     let order
+
     if (idempotencyKey) {
       order = await prisma.order.update({
         where: { id: idempotencyKey },
         data: {
           total: finalAmount,
-          subtotal: subtotal,
+          subtotal,
           tax: 0,
-          shipping: shipping,
+          shipping,
           discount: discount > 0 ? discount : null,
           promoCode: appliedPromoCode,
           razorpayOrderId: razorpayOrder.id,
           addressId,
-          shippingAddressId: addressId, // Set shippingAddressId to link the address
+          shippingAddressId: addressId,
           paymentMethod: 'ONLINE',
           paymentStatus: 'PENDING',
         },
@@ -180,36 +154,24 @@ export async function POST(request: NextRequest) {
         data: {
           userId: session.user.id,
           total: finalAmount,
-          subtotal: subtotal,
+          subtotal,
           tax: 0,
-          shipping: shipping,
+          shipping,
           discount: discount > 0 ? discount : null,
           promoCode: appliedPromoCode,
           razorpayOrderId: razorpayOrder.id,
           addressId,
-          shippingAddressId: addressId, // Set shippingAddressId to link the address
+          shippingAddressId: addressId,
           paymentMethod: 'ONLINE',
           paymentStatus: 'PENDING',
           status: 'PENDING',
-          items: {
-            create: orderItemsPayload,
-          },
+          items: { create: orderItemsPayload },
         },
       })
-
-      // Track promo code usage if applied
-      if (appliedPromoCode && discount > 0) {
-        await prisma.promoCodeUsage.create({
-          data: {
-            code: appliedPromoCode,
-            userId: session.user.id,
-            orderId: order.id,
-          },
-        })
-      }
     }
 
     return NextResponse.json({
+      success: true,
       orderId: order.id,
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
@@ -217,9 +179,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error creating order:', error)
-    return NextResponse.json(
-      { error: 'Failed to create order' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
   }
 }

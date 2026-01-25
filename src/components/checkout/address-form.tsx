@@ -292,14 +292,7 @@ export function AddressForm({
                 />
               </div>
 
-              <div>
-                <Label>City</Label>
-                <Input
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  required
-                />
-              </div>
+              
 
               {/* STATE DROPDOWN */}
               <div>
@@ -318,6 +311,16 @@ export function AddressForm({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* CITY */}
+              <div>
+                <Label>City</Label>
+                <Input
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  required
+                />
               </div>
 
               {/* PINCODE */}

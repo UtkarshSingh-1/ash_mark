@@ -248,9 +248,9 @@ export function AddressBook({ userId }: AddressBookProps) {
 
       <EditAddressDialog
         open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
+        onOpenChangeAction={setEditDialogOpen}
         address={editingAddress}
-        onSave={handleAddressUpdate}
+        onSaveAction={handleAddressUpdate}
       />
     </>
   );

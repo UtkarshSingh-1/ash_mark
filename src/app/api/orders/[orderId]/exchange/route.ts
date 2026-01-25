@@ -13,42 +13,46 @@ export async function POST(
     }
 
     const { orderId } = await params;
-    const { itemId, reason } = await request.json();
+    const { itemId, newSize, reason } = await request.json();
 
-    if (!reason || !itemId) {
+    if (!itemId || !newSize || !reason) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        userId: session.user.id,
-        status: "DELIVERED"
-      }
+      where: { id: orderId, userId: session.user.id, status: "DELIVERED" },
+      include: { items: true }
     });
 
     if (!order) {
-      return NextResponse.json({ error: "Order not eligible for return" }, { status: 400 });
+      return NextResponse.json({ error: "Order not eligible for exchange" }, { status: 400 });
     }
 
-    await prisma.returnRequest.create({
+    const item = order.items.find(i => i.id === itemId);
+    if (!item) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
+    await prisma.exchangeRequest.create({
       data: {
         orderId,
         userId: session.user.id,
         reason,
+        oldSize: item.size,
+        newSize,
       },
     });
 
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        returnStatus: "REQUESTED"
+        exchangeStatus: "REQUESTED",
       }
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Return Error:", error);
-    return NextResponse.json({ error: "Failed to submit return request" }, { status: 500 });
+    console.error("Exchange Error:", error);
+    return NextResponse.json({ error: "Failed to submit exchange request" }, { status: 500 });
   }
 }
