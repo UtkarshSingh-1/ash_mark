@@ -359,6 +359,19 @@ model Settings {
 }
 
 // ---------------------------------------------
+// Reels
+// ---------------------------------------------
+
+model Reel {
+  id        String   @id @default(cuid())
+  videoUrl  String
+  publicId  String
+  createdAt DateTime @default(now())
+
+  @@map("reels")
+}
+
+// ---------------------------------------------
 // Enums
 // ---------------------------------------------
 
@@ -455,3 +468,5 @@ enum OTPPurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
 }
+
+

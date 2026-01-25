@@ -1,107 +1,103 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
-
-export interface ExchangeItemData {
-  id: string;         // orderItemId
-  orderId: string;
-  productName: string;
-  availableSizes: string[];
-}
+import React, { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { toast } from "@/components/ui/use-toast"
 
 interface ExchangeModalProps {
-  open: boolean;
-  onCloseAction: () => void;
-  item: ExchangeItemData | null;
+  open: boolean
+  onCloseAction: () => void
+  item: {
+    orderId: string
+    itemId: string
+    productName: string
+    oldSize?: string | null
+    oldColor?: string | null
+  }
 }
 
-export function ExchangeModal({ open, onCloseAction, item }: ExchangeModalProps) {
-  const [reason, setReason] = useState("");
-  const [newSize, setNewSize] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"]
+const COLOR_OPTIONS = ["BLACK", "WHITE", "GRAY", "RED", "BLUE", "GREEN", "YELLOW", "ORANGE", "PURPLE", "PINK"]
 
-  if (!item) return null;
+export function ExchangeModal({ open, onCloseAction, item }: ExchangeModalProps) {
+  const [reason, setReason] = useState("")
+  const [newSize, setNewSize] = useState<string | undefined>(item.oldSize ?? undefined)
+  const [newColor, setNewColor] = useState<string | undefined>(item.oldColor ?? undefined)
+  const [loading, setLoading] = useState(false)
 
   const submit = async () => {
-    if (!newSize) {
-      toast({ title: "Required", description: "Please select a new size", variant: "destructive" });
-      return;
-    }
-
     if (!reason.trim()) {
-      toast({ title: "Required", description: "Please provide a reason", variant: "destructive" });
-      return;
+      toast({ title: "Reason required", variant: "destructive" })
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
       const res = await fetch(`/api/orders/${item.orderId}/exchange`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          itemId: item.id,
-          newSize,
+          itemId: item.itemId,
           reason,
+          newSize,
+          newColor,
         }),
-      });
+      })
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error()
 
-      toast({ title: "Exchange Requested", description: "Your exchange request was submitted." });
-      onCloseAction();
+      toast({ title: "Exchange Requested", description: "Admin will review your request" })
+      onCloseAction()
     } catch {
-      toast({ title: "Error", description: "Unable to submit exchange request", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to submit exchange", variant: "destructive" })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onCloseAction}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Exchange Item</DialogTitle>
+          <DialogTitle>Exchange Product</DialogTitle>
         </DialogHeader>
 
-        <div className="font-semibold">{item.productName}</div>
-
-        <div className="mt-3">
-          <label className="text-sm font-medium">Select New Size:</label>
-          <Select onValueChange={setNewSize}>
-            <SelectTrigger className="mt-1">
-              {newSize ?? "Select Size"}
-            </SelectTrigger>
-            <SelectContent>
-              {item.availableSizes.map((size) => (
-                <SelectItem key={size} value={size}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <p className="text-sm mb-2 text-muted-foreground">
+          Product: <strong>{item.productName}</strong>
+        </p>
 
         <Textarea
-          className="mt-3"
-          placeholder="Reason for exchange..."
+          placeholder="Why do you want to exchange?"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
 
-        <div className="flex gap-2 mt-4">
-          <Button className="w-full" disabled={loading} onClick={submit}>
+        <div className="flex gap-3 mt-3">
+          <Select value={newSize} onValueChange={setNewSize}>
+            <SelectTrigger><SelectValue placeholder="Size" /></SelectTrigger>
+            <SelectContent>
+              {SIZE_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={newColor} onValueChange={setNewColor}>
+            <SelectTrigger><SelectValue placeholder="Color" /></SelectTrigger>
+            <SelectContent>
+              {COLOR_OPTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-3">
+          <Button variant="ghost" onClick={onCloseAction}>Cancel</Button>
+          <Button onClick={submit} disabled={loading}>
             {loading ? "Submitting..." : "Submit Request"}
-          </Button>
-          <Button variant="outline" className="w-full" onClick={onCloseAction}>
-            Cancel
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

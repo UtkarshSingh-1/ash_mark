@@ -2,39 +2,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, ShoppingBag, Star } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { ProductCard } from "@/components/product/product-card";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { PromoMarquee } from "@/components/layout/promo-marquee";
+import { ReelsCarousel } from "@/components/reels/reels-carousel";
 
 export default async function HomePage() {
-  let featuredProducts: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    comparePrice?: number | null;
-    images: string[];
-    featured: boolean;
-    trending: boolean;
-    category: { name: string };
-  }> = [];
-  let trendingProducts: Array<{
-    id: string;
-    name: string;
-    slug: string;
-    price: number;
-    comparePrice?: number | null;
-    images: string[];
-    featured: boolean;
-    trending: boolean;
-    category: { name: string };
-  }> = [];
+  let featuredProducts: Array<any> = [];
+  let trendingProducts: Array<any> = [];
+  let reels: Array<any> = [];
+
   try {
-    const [featuredRaw, trendingRaw] = await Promise.all([
+    const [featuredRaw, trendingRaw, reelsRaw] = await Promise.all([
       prisma.product.findMany({
         where: { featured: true },
         take: 4,
@@ -45,6 +27,10 @@ export default async function HomePage() {
         take: 4,
         include: { category: true },
       }),
+      prisma.reel.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
     ]);
 
     const serialize = (p: any) => ({
@@ -53,7 +39,9 @@ export default async function HomePage() {
       slug: p.slug,
       price: Number(p.price),
       comparePrice: p.comparePrice ? Number(p.comparePrice) : null,
-      images: Array.isArray(p.images) ? p.images.filter((item: unknown): item is string => typeof item === 'string') : [],
+      images: Array.isArray(p.images)
+        ? p.images.filter((item: unknown): item is string => typeof item === "string")
+        : [],
       featured: p.featured,
       trending: p.trending,
       category: { name: p.category.name },
@@ -61,8 +49,8 @@ export default async function HomePage() {
 
     featuredProducts = featuredRaw.map(serialize);
     trendingProducts = trendingRaw.map(serialize);
+    reels = reelsRaw;
 
-    // If no featured products, get any products for recommended section
     if (featuredProducts.length === 0) {
       const anyFeatured = await prisma.product.findMany({
         take: 4,
@@ -72,7 +60,6 @@ export default async function HomePage() {
       featuredProducts = anyFeatured.map(serialize);
     }
 
-    // If no trending products, get any products for trending section
     if (trendingProducts.length === 0) {
       const anyTrending = await prisma.product.findMany({
         take: 4,
@@ -83,7 +70,6 @@ export default async function HomePage() {
     }
   } catch (e) {
     console.error("Database error:", e);
-    // If the database is unreachable, render the page without products
   }
 
   return (
@@ -105,11 +91,7 @@ export default async function HomePage() {
               Premium T-Shirts. Unique Designs. Unmatched Quality.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="bg-crimson-600 hover:bg-crimson-700"
-                asChild
-              >
+              <Button size="lg" className="bg-crimson-600 hover:bg-crimson-700" asChild>
                 <Link href="/products">
                   <ShoppingBag className="mr-2 h-5 w-5" />
                   Shop Now
@@ -130,13 +112,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Recommended Products Section */}
+        {/* Recommended Products */}
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Recommended For You
-              </h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Recommended For You</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Handpicked premium t-shirts designed for style and comfort
               </p>
@@ -154,13 +134,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Trending Section */}
+        {/* Trending Products */}
         <section className="py-16 px-4 bg-muted/20">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Trending Now
-              </h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Trending Now</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Most selling products loved by our customers
               </p>
@@ -173,15 +151,26 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Reels Section */}
+        {reels.length > 0 && (
+          <section className="py-16 px-4 bg-muted/10">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Reels</h2>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Watch short product showcases & styling ideas from our community
+                </p>
+              </div>
+              <ReelsCarousel reels={reels} />
+            </div>
+          </section>
+        )}
 
-
-        {/* Testimonials Section */}
+        {/* Testimonials */}
         <section className="py-16 px-4 bg-muted/20">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                What Our Customers Say
-              </h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Real reviews from satisfied customers
               </p>
@@ -191,22 +180,19 @@ export default async function HomePage() {
                 {
                   name: "Rahul Sharma",
                   rating: 5,
-                  review:
-                    "Amazing quality t-shirts! The fabric is so comfortable and the designs are unique. Highly recommended!",
+                  review: "Amazing quality t-shirts! The fabric is so comfortable and the designs are unique. Highly recommended!",
                   verified: true,
                 },
                 {
                   name: "Priya Patel",
                   rating: 5,
-                  review:
-                    "Love shopping at ASHMARK. Fast delivery and excellent customer service. Will definitely order again!",
+                  review: "Love shopping at ASHMARK. Fast delivery and excellent customer service. Will definitely order again!",
                   verified: true,
                 },
                 {
                   name: "Amit Kumar",
                   rating: 5,
-                  review:
-                    "Best t-shirt collection I've seen. The fit is perfect and colors remain vibrant even after multiple washes.",
+                  review: "Best t-shirt collection I've seen. The fit is perfect and colors remain vibrant even after multiple washes.",
                   verified: true,
                 },
               ].map((testimonial, index) => (
@@ -214,14 +200,9 @@ export default async function HomePage() {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <div className="flex">
-                        {Array.from({ length: testimonial.rating }).map(
-                          (_, i) => (
-                            <Star
-                              key={i}
-                              className="h-4 w-4 fill-yellow-400 text-yellow-400"
-                            />
-                          )
-                        )}
+                        {Array.from({ length: testimonial.rating }).map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
                       </div>
                       {testimonial.verified && (
                         <Badge variant="secondary" className="text-xs">
@@ -229,14 +210,10 @@ export default async function HomePage() {
                         </Badge>
                       )}
                     </div>
-                    <CardTitle className="text-lg">
-                      {testimonial.name}
-                    </CardTitle>
+                    <CardTitle className="text-lg">{testimonial.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground">
-                      {testimonial.review}
-                    </p>
+                    <p className="text-muted-foreground">{testimonial.review}</p>
                   </CardContent>
                 </Card>
               ))}

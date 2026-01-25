@@ -1,75 +1,81 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RotateCcw, RefreshCcw } from "lucide-react";
-import { ReturnModal } from "./ReturnModal";
-import { ExchangeModal } from "./ExchangeModal";
+import { useState } from "react"
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Download, RefreshCcw, RotateCcw } from "lucide-react"
+import { ReturnModal } from "./ReturnModal"
+import { ExchangeModal } from "./ExchangeModal"
 
-interface OrderActionsProps {
-  order: {
-    id: string;
-    status: string;
-    items: Array<{
-      id: string;
-      quantity: number;
-      size?: string;
-      product: { name: string; sizes?: string[] };
-    }>;
-  };
-}
+export function OrderActions({ order }: { order: any }) {
+  const [returnOpen, setReturnOpen] = useState(false)
+  const [exchangeOpen, setExchangeOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<any>(null)
 
-export function OrderActions({ order }: OrderActionsProps) {
-  const [returnItem, setReturnItem] = useState<any>(null);
-  const [exchangeItem, setExchangeItem] = useState<any>(null);
+  const eligible = order.status === "DELIVERED"
 
-  const canReturn = order.status === "DELIVERED";
+  const openReturn = (item: any) => {
+    setSelectedItem(item)
+    setReturnOpen(true)
+  }
+
+  const openExchange = (item: any) => {
+    setSelectedItem(item)
+    setExchangeOpen(true)
+  }
 
   return (
     <>
       <Card>
-        <CardHeader><CardTitle>Order Actions</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {canReturn &&
-            order.items.map((item) => (
-              <div key={item.id} className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    setReturnItem({
-                      id: item.id,
-                      orderId: order.id,
-                      productName: item.product.name,
-                    })
-                  }
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" /> Return
-                </Button>
+        <CardHeader>
+          <CardTitle>Order Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button className="w-full bg-muted/30">
+            <Download className="w-4 h-4 mr-2" /> Download Invoice
+          </Button>
 
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    setExchangeItem({
-                      id: item.id,
-                      orderId: order.id,
-                      productName: item.product.name,
-                      availableSizes: item.product.sizes ?? [],
-                    })
-                  }
-                >
-                  <RefreshCcw className="w-4 h-4 mr-2" /> Exchange
-                </Button>
-              </div>
-            ))}
+          <Separator className="my-4" />
+
+          {eligible && order.items.map((item: any) => (
+            <div key={item.id} className="flex gap-2 mb-2">
+              <Button variant="outline" className="flex-1" onClick={() => openReturn(item)}>
+                <RotateCcw className="w-4 h-4 mr-2" /> Return
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => openExchange(item)}>
+                <RefreshCcw className="w-4 h-4 mr-2" /> Exchange
+              </Button>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
-      {/* Modals */}
-      <ReturnModal open={!!returnItem} item={returnItem} onCloseAction={() => setReturnItem(null)} />
-      <ExchangeModal open={!!exchangeItem} item={exchangeItem} onCloseAction={() => setExchangeItem(null)} />
+      {selectedItem && (
+        <ReturnModal
+          open={returnOpen}
+          onCloseAction={() => setReturnOpen(false)}
+          item={{
+            id: selectedItem.id,
+            orderId: order.id,
+            productName: selectedItem.product.name,
+          }}
+        />
+      )}
+
+      {selectedItem && (
+        <ExchangeModal
+          open={exchangeOpen}
+          onCloseAction={() => setExchangeOpen(false)}
+          item={{
+            orderId: order.id,
+            itemId: selectedItem.id,
+            productName: selectedItem.product.name,
+            oldSize: selectedItem.size,
+            oldColor: selectedItem.color,
+          }}
+        />
+      )}
     </>
-  );
+  )
 }

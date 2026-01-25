@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import {ReturnModal, ReturnItemData} from '@/components/orders/ReturnModal'
-import {ExchangeModal, ExchangeItemData} from '@/components/orders/ExchangeModal'
+import { ReturnModal } from '@/components/orders/ReturnModal'
+import { ExchangeModal } from '@/components/orders/ExchangeModal'
 
 type Order = {
   id: string | number
@@ -10,9 +10,24 @@ type Order = {
   items: Array<{
     id: string
     quantity: number
-    size?: string
+    size?: string | null
+    color?: string | null
     product: { name: string; sizes?: string[] }
   }>
+}
+
+type ReturnItemData = {
+  id: string
+  orderId: string
+  productName: string
+}
+
+type ExchangeItemData = {
+  orderId: string
+  itemId: string
+  productName: string
+  oldSize?: string | null
+  oldColor?: string | null
 }
 
 export default function OrderActions({ order }: { order: Order }) {
@@ -39,10 +54,11 @@ export default function OrderActions({ order }: { order: Order }) {
             <button 
               className="btn" 
               onClick={() => setExchangeItem({
-                id: item.id,
                 orderId: String(order.id),
+                itemId: item.id,
                 productName: item.product.name,
-                availableSizes: item.product.sizes ?? [],
+                oldSize: item.size ?? null,
+                oldColor: item.color ?? null,
               })}
             >
               Exchange
@@ -51,16 +67,20 @@ export default function OrderActions({ order }: { order: Order }) {
         ))}
       </div>
 
-      <ReturnModal 
-        open={!!returnItem} 
-        item={returnItem} 
-        onCloseAction={() => setReturnItem(null)} 
-      />
-      <ExchangeModal 
-        open={!!exchangeItem} 
-        item={exchangeItem} 
-        onCloseAction={() => setExchangeItem(null)} 
-      />
+      {returnItem && (
+        <ReturnModal 
+          open 
+          item={returnItem} 
+          onCloseAction={() => setReturnItem(null)} 
+        />
+      )}
+      {exchangeItem && (
+        <ExchangeModal 
+          open 
+          item={exchangeItem} 
+          onCloseAction={() => setExchangeItem(null)} 
+        />
+      )}
     </>
-  )
+  );
 }
