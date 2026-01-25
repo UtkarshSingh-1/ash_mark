@@ -25,10 +25,13 @@ export default async function ProductPage({
     notFound()
   }
 
+  // Extract arrays
   const images = jsonToStringArray(product.images)
   const sizes = jsonToStringArray(product.sizes) as string[]
   const colors = jsonToStringArray(product.colors) as string[]
+  const storyImages = jsonToStringArray(product.storyImages) as string[]
 
+  // Serialize product
   const serializedProduct = {
     id: product.id,
     name: product.name,
@@ -45,6 +48,10 @@ export default async function ProductPage({
     },
     storyContent: product.storyContent,
     storyTitle: product.storyTitle,
+
+    // 👇 NEW: Provide storyImage + full array
+    storyImage: storyImages[0] ?? images[0],
+    storyImages,
   }
 
   return (

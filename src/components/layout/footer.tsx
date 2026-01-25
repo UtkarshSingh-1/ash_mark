@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 export function Footer() {
   return (
@@ -17,16 +18,48 @@ export function Footer() {
               Premium quality t-shirts with unique designs. Style meets comfort
               at ASHMARK.
             </p>
+
             <div className="flex space-x-2">
-              <Button variant="ghost" size="sm">
-                <Facebook className="h-4 w-4" />
-              </Button>
+              {/* Facebook - Coming Soon */}
+              <Tooltip.Provider>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Facebook className="h-4 w-4" />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    side="bottom"
+                    className="text-xs bg-black text-white px-2 py-1 rounded"
+                  >
+                    Coming Soon
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+
+              {/* Instagram - link will be added later */}
               <Button variant="ghost" size="sm">
                 <Instagram className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm">
-                <Twitter className="h-4 w-4" />
-              </Button>
+
+              {/* Twitter - Coming Soon */}
+              <Tooltip.Provider>
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Twitter className="h-4 w-4" />
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content
+                    side="bottom"
+                    className="text-xs bg-black text-white px-2 py-1 rounded"
+                  >
+                    Coming Soon
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              </Tooltip.Provider>
+
+              {/* YouTube - link will be added later */}
               <Button variant="ghost" size="sm">
                 <Youtube className="h-4 w-4" />
               </Button>

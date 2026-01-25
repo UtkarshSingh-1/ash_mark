@@ -59,25 +59,25 @@ model VerificationToken {
 // ---------------------------------------------
 
 model User {
-  id              String           @id @default(cuid())
-  name            String?
-  email           String           @unique
-  emailVerified   DateTime?        @map("email_verified")
-  image           String?
-  password        String?          @db.Text
-  role            Role             @default(USER)
-  accounts        Account[]
-  sessions        Session[]
-  orders          Order[]
-  cart            CartItem[]
-  addresses       Address[]
-  wishlistItems   WishlistItem[]
-  reviews         Review[]
-  promoCodeUsages PromoCodeUsage[]
-  returnRequests  ReturnRequest[]
+  id               String            @id @default(cuid())
+  name             String?
+  email            String            @unique
+  emailVerified    DateTime?         @map("email_verified")
+  image            String?
+  password         String?           @db.Text
+  role             Role              @default(USER)
+  accounts         Account[]
+  sessions         Session[]
+  orders           Order[]
+  cart             CartItem[]
+  addresses        Address[]
+  wishlistItems    WishlistItem[]
+  reviews          Review[]
+  promoCodeUsages  PromoCodeUsage[]
+  returnRequests   ReturnRequest[]
   exchangeRequests ExchangeRequest[]
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -113,7 +113,7 @@ model Product {
   featured      Boolean        @default(false)
   trending      Boolean        @default(false)
   storyTitle    String?        @map("story_title")
-  storyContent  String?        @db.Text @map("story_content")
+  storyContent  String?        @map("story_content") @db.Text
   storyImages   Json           @default("[]") @map("story_images")
   categoryId    String         @map("category_id")
   category      Category       @relation(fields: [categoryId], references: [id])
@@ -170,30 +170,30 @@ model WishlistItem {
 // ---------------------------------------------
 
 model Order {
-  id                String        @id @default(cuid())
-  userId            String        @map("user_id")
-  user              User          @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
 
   // Finance
-  total             Decimal       @db.Decimal(10, 2)
-  subtotal          Decimal       @db.Decimal(10, 2)
-  tax               Decimal       @db.Decimal(10, 2)
-  shipping          Decimal       @db.Decimal(10, 2)
-  discount          Decimal?      @db.Decimal(10, 2)
-  promoCode         String?
-  promoCodeUsage    PromoCodeUsage?
+  total          Decimal         @db.Decimal(10, 2)
+  subtotal       Decimal         @db.Decimal(10, 2)
+  tax            Decimal         @db.Decimal(10, 2)
+  shipping       Decimal         @db.Decimal(10, 2)
+  discount       Decimal?        @db.Decimal(10, 2)
+  promoCode      String?
+  promoCodeUsage PromoCodeUsage?
 
   // Status
-  status            OrderStatus   @default(PENDING)
-  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
-  paymentMethod     String?       @map("payment_method")
+  status        OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  paymentMethod String?       @map("payment_method")
 
   // Payment IDs
-  razorpayOrderId   String?       @map("razorpay_order_id")
-  razorpayPaymentId String?       @map("razorpay_payment_id")
+  razorpayOrderId   String? @map("razorpay_order_id")
+  razorpayPaymentId String? @map("razorpay_payment_id")
 
   // Address (Snapshot)
-  addressId         String        @map("address_id")
+  addressId         String   @map("address_id")
   shippingName      String?
   shippingPhone     String?
   shippingStreet    String?
@@ -202,30 +202,30 @@ model Order {
   shippingPincode   String?
   shippingCountry   String?
   shippingAddressId String?
-  shippingAddress   Address?      @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
 
   // Items
-  items             OrderItem[]
+  items OrderItem[]
 
   // Logistics Timeline
-  shippedAt         DateTime?
-  outForDeliveryAt  DateTime?
-  deliveredAt       DateTime?
-  completedAt       DateTime?
-  cancelledAt       DateTime?
+  shippedAt          DateTime?
+  outForDeliveryAt   DateTime?
+  deliveredAt        DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
   returnEligibleTill DateTime? // computed via deliveredAt + X days
-  trackingId        String?
-  courierName       String?
-  trackingUrl       String?
+  trackingId         String?
+  courierName        String?
+  trackingUrl        String?
 
   // Return / Exchange
-  returnStatus      ReturnStatus   @default(NONE)
-  exchangeStatus    ExchangeStatus @default(NONE)
-  returnRequests    ReturnRequest[]
-  exchangeRequests  ExchangeRequest[]
+  returnStatus     ReturnStatus      @default(NONE)
+  exchangeStatus   ExchangeStatus    @default(NONE)
+  returnRequests   ReturnRequest[]
+  exchangeRequests ExchangeRequest[]
 
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("orders")
 }
@@ -261,10 +261,10 @@ model Address {
   type      AddressType @default(home)
   isDefault Boolean     @default(false)
   userId    String
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders    Order[] @relation("ShippingAddress")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]     @relation("ShippingAddress")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   @@index([userId])
   @@index([userId, isDefault])
@@ -276,16 +276,22 @@ model Address {
 // ---------------------------------------------
 
 model Review {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  productId String   @map("product_id")
-  rating    Int
-  title     String?
-  comment   String?  @db.Text
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  productId   String        @map("product_id")
+  rating      Int
+  title       String?
+  comment     String?       @db.Text
+  media       Json?         @default("[]")
+  helpful     Int           @default(0)
+  notHelpful  Int           @default(0)
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product     Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  votes       ReviewVote[]  // <--- relation to votes
+
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt      @map("updated_at")
 
   @@unique([userId, productId])
   @@index([productId])
@@ -294,18 +300,35 @@ model Review {
   @@map("reviews")
 }
 
+
+model ReviewVote {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  vote      String   // "helpful" or "notHelpful"
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId]) // prevents multiple votes
+  @@map("review_votes")
+}
+
+
+
+
 // ---------------------------------------------
 // Promo Codes
 // ---------------------------------------------
 
 model PromoCodeUsage {
-  id        String   @id @default(cuid())
-  code      String
-  userId    String   @map("user_id")
-  orderId   String?  @unique @map("order_id")
-  usedAt    DateTime @default(now()) @map("used_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  id      String   @id @default(cuid())
+  code    String
+  userId  String   @map("user_id")
+  orderId String?  @unique @map("order_id")
+  usedAt  DateTime @default(now()) @map("used_at")
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, code])
   @@index([userId])
@@ -318,31 +341,31 @@ model PromoCodeUsage {
 // ---------------------------------------------
 
 model ReturnRequest {
-  id        String     @id @default(cuid())
+  id        String       @id @default(cuid())
   orderId   String
   userId    String
   reason    String
   images    Json?
   status    ReturnStatus @default(REQUESTED)
   adminNote String?
-  createdAt DateTime    @default(now())
+  createdAt DateTime     @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ExchangeRequest {
-  id         String         @id @default(cuid())
-  orderId    String
-  userId     String
-  reason     String
-  oldSize    Size?
-  newSize    Size?
-  oldColor   Color?
-  newColor   Color?
-  status     ExchangeStatus @default(REQUESTED)
-  adminNote  String?
-  createdAt  DateTime       @default(now())
+  id        String         @id @default(cuid())
+  orderId   String
+  userId    String
+  reason    String
+  oldSize   Size?
+  newSize   Size?
+  oldColor  Color?
+  newColor  Color?
+  status    ExchangeStatus @default(REQUESTED)
+  adminNote String?
+  createdAt DateTime       @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -353,9 +376,9 @@ model ExchangeRequest {
 // ---------------------------------------------
 
 model Settings {
-  id                String  @id @default(cuid())
-  returnWindowDays  Int     @default(7) // Admin adjustable (7, 10, 15 etc.)
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(cuid())
+  returnWindowDays Int      @default(7) // Admin adjustable (7, 10, 15 etc.)
+  updatedAt        DateTime @updatedAt @map("updated_at")
 }
 
 // ---------------------------------------------
@@ -370,7 +393,6 @@ model Reel {
 
   @@map("reels")
 }
-
 
 // ---------------------------------------------
 // Enums
@@ -422,7 +444,6 @@ enum OrderStatus {
   EXCHANGED
 }
 
-
 enum PaymentStatus {
   PENDING
   PAID
@@ -452,14 +473,13 @@ enum ExchangeStatus {
   COMPLETED
 }
 
-
 model EmailOTP {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   email     String
   otp       String
   purpose   OTPPurpose
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
 
   @@index([email])
   @@map("email_otps")
@@ -469,5 +489,3 @@ enum OTPPurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
 }
-
-

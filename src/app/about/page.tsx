@@ -14,8 +14,10 @@ export default function AboutPage() {
           <div className="text-center mb-16">
             <h1 className="text-4xl font-bold mb-4">About ASHMARK</h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              We're passionate about creating premium quality t-shirts that combine style, comfort, and sustainability. 
-              Our journey began with a simple vision: to make fashion accessible without compromising on quality.
+              ASHMARK was born from the belief that clothing should leave a lasting mark — not chase fleeting trends.
+              We create intentional streetwear built to exist beyond eras, seasons, and hype cycles. Clean silhouettes,
+              structured proportions, and premium craftsmanship come together to form garments that age with character
+              instead of wearing out with time.
             </p>
           </div>
 
@@ -30,8 +32,9 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  To provide high-quality, sustainable t-shirts that empower individuals to express their unique style 
-                  while making a positive impact on the environment and communities we serve.
+                  Our mission is to create high-quality, timeless streetwear that empowers individuals to express identity
+                  through subtlety, substance, and craft. We reject fast-fashion, trend-based design and instead build pieces
+                  with intention, precision, and durability — garments that feel relevant in the past, present, and future.
                 </p>
               </CardContent>
             </Card>
@@ -45,8 +48,9 @@ export default function AboutPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  To become the leading sustainable fashion brand that sets new standards for quality, 
-                  ethical production, and customer satisfaction in the t-shirt industry.
+                  Our vision is to redefine modern streetwear through timeless forms, ethical production, and meticulous
+                  detail work — with embroidery and texture serving as our visual language. We aim to become a brand that
+                  stands out permanently, not loudly, and inspires individuals to create their own lane.
                 </p>
               </CardContent>
             </Card>
@@ -65,8 +69,8 @@ export default function AboutPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    We use only the finest materials and maintain strict quality control to ensure every 
-                    product meets our high standards.
+                    Premium materials selected for durability, comfort, and longevity. Construction focused
+                    on wearability and endurance. Every piece is built to age with character, not fall apart with time.
                   </p>
                 </CardContent>
               </Card>
@@ -80,8 +84,8 @@ export default function AboutPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Our customers are at the heart of everything we do. We listen, learn, and continuously 
-                    improve based on your feedback.
+                    ASHMARK is made for individuals who value substance over noise and refuse to blend into the crowd.
+                    We listen, adapt, and continually refine our craft based on real-world feedback and community culture.
                   </p>
                 </CardContent>
               </Card>
@@ -95,8 +99,8 @@ export default function AboutPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    We're committed to sustainable practices, from eco-friendly materials to ethical 
-                    manufacturing processes.
+                    We prioritize ethical production, responsible sourcing, and sustainable materials. True longevity is
+                    sustainable — pieces designed to last reduce waste, consumption, and environmental impact over time.
                   </p>
                 </CardContent>
               </Card>
@@ -111,19 +115,19 @@ export default function AboutPage() {
                 <CardContent className="pt-6">
                   <div className="prose prose-gray max-w-none">
                     <p className="text-muted-foreground mb-4">
-                      ASHMARK was founded in 2020 by a team of fashion enthusiasts who were frustrated with the 
-                      lack of quality and sustainability in the t-shirt market. We noticed that most brands 
-                      either compromised on quality or charged exorbitant prices.
+                      ASHMARK began in 2020 as a response to a fashion industry that prioritized speed over substance.
+                      Our founders — with backgrounds in textile engineering and modern streetwear — saw a gap:
+                      clothing that looked good, but lacked purpose, longevity, or identity.
                     </p>
                     <p className="text-muted-foreground mb-4">
-                      Our founders, with backgrounds in textile engineering and sustainable fashion, set out to 
-                      create a brand that would bridge this gap. We spent months researching the best materials, 
-                      working with ethical manufacturers, and perfecting our designs.
+                      We set out to change that by designing intentionally. Embroidery became our signature —
+                      not decoration, but identity. Every cut, seam, and proportion is deliberate, unhurried, and precise.
+                      This is how pieces become timeless instead of trendy.
                     </p>
                     <p className="text-muted-foreground">
-                      Today, ASHMARK has grown from a small startup to a trusted brand serving thousands of 
-                      customers worldwide, all while maintaining our commitment to quality, sustainability, and 
-                      customer satisfaction.
+                      Today, ASHMARK has evolved from a small passion project into a global community,
+                      yet our philosophy remains the same: Style fades. Identity doesn’t.
+                      This is intentional streetwear, made to leave a mark.
                     </p>
                   </div>
                 </CardContent>
@@ -163,8 +167,8 @@ export default function AboutPage() {
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-8">Meet Our Team</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-              We're a diverse team of designers, engineers, and customer service professionals 
-              who are passionate about creating the best possible experience for our customers.
+              A diverse group of designers, engineers, and creators united by a shared goal:
+              to build clothing with identity, integrity, and intention.
             </p>
             <Badge variant="outline" className="text-sm">
               Join Our Team

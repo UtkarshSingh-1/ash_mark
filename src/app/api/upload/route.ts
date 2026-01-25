@@ -1,37 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { UTApi } from 'uploadthing/server'
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { UTApi } from "uploadthing/server"
 
 const utapi = new UTApi()
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const formData = await request.formData()
-    const file = formData.get('file') as File
-    const folder = formData.get('folder') as string || 'uploads'
+    const file = formData.get("file") as File
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+      return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    const isVideo = file.type.startsWith("video")
+    const isImage = file.type.startsWith("image")
+
+    if (!isVideo && !isImage) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.' },
+        { error: "Only image/video uploads are allowed" },
         { status: 400 }
       )
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Size validation: 10MB max for videos, 5MB for images
+    if (isVideo && file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'File size too large. Maximum 5MB allowed.' },
+        { error: "Video size must be ≤ 10MB" },
+        { status: 400 }
+      )
+    }
+
+    if (isImage && file.size > 5 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "Image size must be ≤ 5MB" },
         { status: 400 }
       )
     }
@@ -40,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!uploaded || uploaded.error || !uploaded.data?.url) {
       return NextResponse.json(
-        { error: 'Failed to upload file' },
+        { error: "Upload failed" },
         { status: 500 }
       )
     }
@@ -48,12 +55,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       url: uploaded.data.url,
-      folder,
-    })
+      type: isVideo ? "video" : "image"
+    })  
   } catch (error) {
-    console.error('Error uploading file:', error)
+    console.error("Error uploading review media:", error)
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { error: "Failed to upload media" },
       { status: 500 }
     )
   }

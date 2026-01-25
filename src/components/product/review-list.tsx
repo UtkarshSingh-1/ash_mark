@@ -1,11 +1,11 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Star, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { Star, MoreVertical, Trash2, ThumbsUp, ThumbsDown } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import {
@@ -16,12 +16,20 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/use-toast"
 
+interface Media {
+  url: string
+  type: "image" | "video"
+}
+
 interface Review {
   id: string
   rating: number
   title: string | null
   comment: string | null
   createdAt: string
+  media?: Media[]
+  helpful: number
+  notHelpful: number
   user: {
     id: string
     name: string | null
@@ -43,28 +51,23 @@ export function ReviewList({ productId, onReviewDeleted }: ReviewListProps) {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
 
-  const fetchReviews = async (pageNum = 1, reset = false) => {
+  async function fetchReviews(pageNum = 1, reset = false) {
     try {
       setLoading(true)
-      const response = await fetch(
-        `/api/reviews?productId=${productId}&page=${pageNum}&limit=5`
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        
-        if (reset) {
-          setReviews(data.reviews)
-        } else {
-          setReviews(prev => [...prev, ...data.reviews])
-        }
-        
-        setAverageRating(data.averageRating || 0)
-        setRatingDistribution(data.ratingDistribution || {})
-        setHasMore(data.pagination.page < data.pagination.pages)
+      const res = await fetch(`/api/reviews?productId=${productId}&page=${pageNum}&limit=5`)
+      const data = await res.json()
+
+      if (reset) {
+        setReviews(data.reviews)
+      } else {
+        setReviews(prev => [...prev, ...data.reviews])
       }
-    } catch (error) {
-      console.error('Error fetching reviews:', error)
+
+      setAverageRating(data.averageRating || 0)
+      setRatingDistribution(data.ratingDistribution || {})
+      setHasMore(data.pagination.page < data.pagination.pages)
+    } catch (err) {
+      console.error("Error fetching reviews:", err)
     } finally {
       setLoading(false)
     }
@@ -74,41 +77,38 @@ export function ReviewList({ productId, onReviewDeleted }: ReviewListProps) {
     fetchReviews(1, true)
   }, [productId])
 
-  const handleDeleteReview = async (reviewId: string) => {
+  async function handleDeleteReview(reviewId: string) {
     try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: 'DELETE',
-      })
+      const res = await fetch(`/api/reviews/${reviewId}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
 
-      if (response.ok) {
-        toast({
-          title: "Review Deleted",
-          description: "Your review has been deleted",
-        })
-        setReviews(prev => prev.filter(review => review.id !== reviewId))
-        onReviewDeleted?.()
-        // Refresh reviews to update average rating
-        fetchReviews(1, true)
-      } else {
-        throw new Error('Failed to delete review')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete review",
-        variant: "destructive",
-      })
+      toast({ title: "Review Deleted", description: "Your review has been removed." })
+      setReviews(prev => prev.filter(r => r.id !== reviewId))
+      onReviewDeleted?.()
+      fetchReviews(1, true)
+    } catch {
+      toast({ title: "Error", description: "Could not delete review", variant: "destructive" })
     }
   }
 
-  const loadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchReviews(nextPage, false)
+  async function vote(reviewId: string, type: "helpful" | "notHelpful") {
+    const res = await fetch("/api/reviews/vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewId, vote: type }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      toast({ title: "Error", description: data.error, variant: "destructive" })
+      return
+    }
+
+    fetchReviews(1, true)
   }
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
+  const renderStars = (rating: number) =>
+    Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
         className={cn(
@@ -117,114 +117,105 @@ export function ReviewList({ productId, onReviewDeleted }: ReviewListProps) {
         )}
       />
     ))
-  }
-
-  if (loading && reviews.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 bg-muted w-1/4"></div>
-                <div className="h-3 bg-muted w-1/2"></div>
-                <div className="h-3 bg-muted w-3/4"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <div className="space-y-6">
-      {/* Average Rating Summary */}
+
+      {/* SUMMARY */}
       {reviews.length > 0 && (
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold">{averageRating.toFixed(1)}</div>
-                <div className="flex items-center gap-1">
-                  {renderStars(Math.round(averageRating))}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Based on {reviews.length} review{reviews.length > 1 ? 's' : ''}
-                </div>
+          <CardContent className="p-6 flex gap-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold">{averageRating.toFixed(1)}</div>
+              <div className="flex items-center gap-1 justify-center">
+                {renderStars(Math.round(averageRating))}
               </div>
-              
-              <div className="flex-1 space-y-2">
-                {[5, 4, 3, 2, 1].map((star) => {
-                  const count = ratingDistribution[star] || 0
-                  const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0
-                  
-                  return (
-                    <div key={star} className="flex items-center gap-2">
-                      <span className="text-sm w-4">{star}</span>
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <div className="flex-1 bg-muted rounded-full h-2">
-                        <div
-                          className="bg-yellow-400 h-2 rounded-full transition-all"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-muted-foreground w-8">
-                        {count}
-                      </span>
-                    </div>
-                  )
-                })}
+              <div className="text-sm text-muted-foreground">
+                Based on {reviews.length} reviews
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Reviews List */}
+      {/* LIST */}
       <Card>
         <CardHeader>
           <CardTitle>Customer Reviews</CardTitle>
         </CardHeader>
         <CardContent>
+
           {reviews.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No reviews yet</p>
-              <p className="text-sm text-muted-foreground">
-                Be the first to review this product!
-              </p>
-            </div>
+            <p className="text-center text-muted-foreground">No reviews yet</p>
           ) : (
             <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review.id} className="border-b pb-4 last:border-b-0">
+              {reviews.map(review => (
+                <div key={review.id} className="border-b pb-4 last:border-0">
+                  
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex items-center gap-1">
-                          {renderStars(review.rating)}
-                        </div>
-                        {review.title && (
-                          <h4 className="font-medium">{review.title}</h4>
-                        )}
+
+                      {/* STARS + TITLE */}
+                      <div className="flex items-center gap-2 mb-1">
+                        {renderStars(review.rating)}
+                        {review.title && <span className="font-medium">{review.title}</span>}
                       </div>
-                      
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                        <span className="font-medium">
-                          {review.user.name || 'Anonymous'}
-                        </span>
-                        <span>•</span>
-                        <span>
-                          {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
-                        </span>
+
+                      {/* USER + TIME */}
+                      <div className="text-sm text-muted-foreground mb-1">
+                        {review.user.name || "Anonymous"} •{" "}
+                        {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
                       </div>
-                      
+
+                      {/* COMMENT */}
                       {review.comment && (
-                        <p className="text-sm leading-relaxed">{review.comment}</p>
+                        <p className="text-sm leading-relaxed mb-2">{review.comment}</p>
                       )}
+
+                      {/* MEDIA */}
+                      {Array.isArray(review.media) && review.media.length > 0 && (
+                        <div className="flex flex-wrap gap-3 mt-2">
+                          {review.media.map((m, i) =>
+                            m.type === "image" ? (
+                              <Image
+                                key={i}
+                                src={m.url}
+                                alt="Review media"
+                                width={100}
+                                height={100}
+                                className="object-cover rounded border cursor-pointer hover:opacity-90"
+                                onClick={() => window.open(m.url, "_blank")}
+                              />
+                            ) : (
+                              <video
+                                key={i}
+                                src={m.url}
+                                className="w-28 h-28 rounded border"
+                                controls
+                              />
+                            )
+                          )}
+                        </div>
+                      )}
+
+                      {/* VOTING */}
+                      <div className="flex gap-4 mt-3">
+                        <button
+                          className="flex items-center gap-1 text-xs text-green-600 hover:underline"
+                          onClick={() => vote(review.id, "helpful")}
+                        >
+                          <ThumbsUp className="h-3 w-3" /> Helpful ({review.helpful})
+                        </button>
+                        <button
+                          className="flex items-center gap-1 text-xs text-red-600 hover:underline"
+                          onClick={() => vote(review.id, "notHelpful")}
+                        >
+                          <ThumbsDown className="h-3 w-3" /> Not Helpful ({review.notHelpful})
+                        </button>
+                      </div>
                     </div>
-                    
-                    {/* Review Actions (only for user's own reviews) */}
+
+                    {/* DELETE MENU */}
                     {session?.user?.id === review.user.id && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -237,8 +228,7 @@ export function ReviewList({ productId, onReviewDeleted }: ReviewListProps) {
                             onClick={() => handleDeleteReview(review.id)}
                             className="text-destructive"
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Review
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete Review
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -246,13 +236,16 @@ export function ReviewList({ productId, onReviewDeleted }: ReviewListProps) {
                   </div>
                 </div>
               ))}
-              
+
               {hasMore && (
                 <div className="text-center pt-4">
                   <Button
                     variant="outline"
-                    onClick={loadMore}
                     disabled={loading}
+                    onClick={() => {
+                      setPage(prev => prev + 1)
+                      fetchReviews(page + 1)
+                    }}
                   >
                     {loading ? "Loading..." : "Load More Reviews"}
                   </Button>

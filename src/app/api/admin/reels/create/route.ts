@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -12,8 +13,8 @@ export async function POST(req: Request) {
     await prisma.reel.create({
       data: {
         videoUrl,
-        // Removed publicId as it's not in the Reel schema type
-      },
+        publicId,
+      } as Prisma.ReelUncheckedCreateInput,
     });
 
     return NextResponse.json({ success: true });

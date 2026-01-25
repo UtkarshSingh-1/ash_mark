@@ -16,22 +16,27 @@ export default async function HomePage() {
   let reels: Array<any> = [];
 
   try {
-    const [featuredRaw, trendingRaw, reelsRaw] = await Promise.all([
-      prisma.product.findMany({
-        where: { featured: true },
-        take: 4,
-        include: { category: true },
-      }),
-      prisma.product.findMany({
-        where: { trending: true },
-        take: 4,
-        include: { category: true },
-      }),
-      prisma.reel.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 10,
-      }),
-    ]);
+    const [featuredRaw, trendingRaw, reelsRaw] = await Promise.race([
+      Promise.all([
+        prisma.product.findMany({
+          where: { featured: true },
+          take: 4,
+          include: { category: true },
+        }),
+        prisma.product.findMany({
+          where: { trending: true },
+          take: 4,
+          include: { category: true },
+        }),
+        prisma.reel.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        }),
+      ]),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Database query timeout")), 8000)
+      ),
+    ]) as [any[], any[], any[]];
 
     const serialize = (p: any) => ({
       id: p.id,
@@ -52,24 +57,43 @@ export default async function HomePage() {
     reels = reelsRaw;
 
     if (featuredProducts.length === 0) {
-      const anyFeatured = await prisma.product.findMany({
-        take: 4,
-        include: { category: true },
-        orderBy: { createdAt: "desc" },
-      });
-      featuredProducts = anyFeatured.map(serialize);
+      try {
+        const anyFeatured = await Promise.race([
+          prisma.product.findMany({
+            take: 4,
+            include: { category: true },
+            orderBy: { createdAt: "desc" },
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 5000)
+          ),
+        ]) as any[];
+        featuredProducts = anyFeatured.map(serialize);
+      } catch (e) {
+        console.error("Error fetching featured products:", e);
+      }
     }
 
     if (trendingProducts.length === 0) {
-      const anyTrending = await prisma.product.findMany({
-        take: 4,
-        include: { category: true },
-        orderBy: { createdAt: "desc" },
-      });
-      trendingProducts = anyTrending.map(serialize);
+      try {
+        const anyTrending = await Promise.race([
+          prisma.product.findMany({
+            take: 4,
+            include: { category: true },
+            orderBy: { createdAt: "desc" },
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Timeout")), 5000)
+          ),
+        ]) as any[];
+        trendingProducts = anyTrending.map(serialize);
+      } catch (e) {
+        console.error("Error fetching trending products:", e);
+      }
     }
   } catch (e) {
-    console.error("Database error:", e);
+    console.error("Database connection error:", e);
+    // Page will still render with empty arrays
   }
 
   return (

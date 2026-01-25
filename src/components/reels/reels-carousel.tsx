@@ -104,7 +104,9 @@ export function ReelsCarousel({ reels }: { reels: any[] }) {
       {reels.map((reel, index) => (
         <video
           key={reel.id}
-          ref={(el) => (videoRefs.current[index] = el)}
+          ref={(el) => {
+            videoRefs.current[index] = el;
+          }}
           src={reel.videoUrl}
           preload="metadata"
           playsInline
