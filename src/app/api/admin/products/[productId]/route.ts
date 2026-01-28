@@ -37,33 +37,33 @@ export async function PUT(
 
     const body = await request.json()
     const validatedData = updateProductSchema.parse(body)
+    const { productId } = await context.params
 
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
-      where: { id: (await context.params).productId },
+      where: { id: productId },
     })
 
     if (!existingProduct) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    // Check if slug conflicts with other products
+    // Check slug uniqueness
     if (validatedData.slug !== existingProduct.slug) {
       const conflictingProduct = await prisma.product.findFirst({
         where: { 
           slug: validatedData.slug,
-          id: { not: (await context.params).productId }
+          id: { not: productId }
         },
       })
 
       if (conflictingProduct) {
-        // Generate unique slug
         const timestamp = Date.now()
         validatedData.slug = `${validatedData.slug}-${timestamp}`
       }
     }
 
-    // Check if category exists
+    // Check category
     const category = await prisma.category.findUnique({
       where: { id: validatedData.categoryId },
     })
@@ -75,20 +75,19 @@ export async function PUT(
       )
     }
 
-    // Map incoming strings to Prisma enums for sizes and colors
     const allowedSizes = ['XS','S','M','L','XL','XXL']
     const allowedColors = ['BLACK','WHITE','GRAY','RED','BLUE','GREEN','YELLOW','ORANGE','PURPLE','PINK']
 
     const sizesEnum = (validatedData.sizes || [])
-      .map((s) => (typeof s === 'string' ? s.toUpperCase() : s))
+      .map((s) => s.toUpperCase())
       .filter((s) => allowedSizes.includes(s)) as any
 
     const colorsEnum = (validatedData.colors || [])
-      .map((c) => (typeof c === 'string' ? c.toUpperCase() : c))
+      .map((c) => c.toUpperCase())
       .filter((c) => allowedColors.includes(c)) as any
 
     const product = await prisma.product.update({
-      where: { id: (await context.params).productId },
+      where: { id: productId },
       data: {
         name: validatedData.name,
         description: validatedData.description,
@@ -114,6 +113,7 @@ export async function PUT(
       message: 'Product updated successfully',
       product,
     })
+
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -130,7 +130,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/admin/products/[productId] - Hard delete product
+// DELETE /api/admin/products/[productId] - Hard delete with cascade
 export async function DELETE(
   request: NextRequest,
   context: ProductParams
@@ -141,24 +141,30 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { productId } = await context.params
+
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
-      where: { id: (await context.params).productId },
+      where: { id: productId },
     })
 
     if (!existingProduct) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    // Hard delete the product
-    await prisma.product.delete({
-      where: { id: (await context.params).productId },
-    })
+    // Perform cascading deletion
+    await prisma.$transaction([
+      prisma.orderItem.deleteMany({ where: { productId } }),
+      prisma.wishlistItem.deleteMany({ where: { productId } }),
+      prisma.cartItem?.deleteMany?.({ where: { productId } }).catch(() => {}), // if cartItem exists
+      prisma.product.delete({ where: { id: productId } })
+    ])
 
     return NextResponse.json({
       success: true,
       message: 'Product deleted successfully',
     })
+
   } catch (error) {
     console.error('Error deleting product:', error)
     return NextResponse.json(
