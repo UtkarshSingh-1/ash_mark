@@ -1,19 +1,20 @@
-// ---------------------------------------------
-// Prisma Client Generator & Database
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Prisma Client & Database
+// -------------------------------------------------------
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
-// ---------------------------------------------
-// Auth Models (NEXT-AUTH)
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Auth Models (Next-Auth)
+// -------------------------------------------------------
 
 model Account {
   id                String  @id @default(cuid())
@@ -40,7 +41,8 @@ model Session {
   sessionToken String   @unique @map("session_token")
   userId       String   @map("user_id")
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -54,20 +56,23 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-// ---------------------------------------------
-// Core User Models
-// ---------------------------------------------
+// -------------------------------------------------------
+//  User + Wallet
+// -------------------------------------------------------
 
 model User {
-  id               String            @id @default(cuid())
-  name             String?
-  email            String            @unique
-  emailVerified    DateTime?         @map("email_verified")
-  image            String?
-  password         String?           @db.Text
-  role             Role              @default(USER)
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  password      String?   @db.Text
+  role          Role      @default(USER)
+  walletBalance Decimal   @default(0) @db.Decimal(10, 2)
+
   accounts         Account[]
   sessions         Session[]
+  walletHistory    WalletTransaction[]
   orders           Order[]
   cart             CartItem[]
   addresses        Address[]
@@ -76,15 +81,32 @@ model User {
   promoCodeUsages  PromoCodeUsage[]
   returnRequests   ReturnRequest[]
   exchangeRequests ExchangeRequest[]
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
 
-// ---------------------------------------------
-// Product Models
-// ---------------------------------------------
+model WalletTransaction {
+  id        String       @id @default(cuid())
+  userId    String
+  orderId   String?
+  amount    Decimal      @db.Decimal(10, 2)
+  type      WalletType
+  reason    WalletReason
+  createdAt DateTime     @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([orderId])
+}
+
+// -------------------------------------------------------
+//  Product Models
+// -------------------------------------------------------
 
 model Category {
   id          String    @id @default(cuid())
@@ -93,59 +115,59 @@ model Category {
   description String?
   image       String?
   products    Product[]
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("categories")
 }
 
 model Product {
-  id            String         @id @default(cuid())
-  name          String
-  slug          String         @unique
-  description   String?        @db.Text
-  price         Decimal        @db.Decimal(10, 2)
-  comparePrice  Decimal?       @db.Decimal(10, 2)
-  images        Json           @default("[]")
-  sizes         Json           @default("[]")
-  colors        Json           @default("[]")
-  stock         Int            @default(0)
-  featured      Boolean        @default(false)
-  trending      Boolean        @default(false)
-  storyTitle    String?        @map("story_title")
-  storyContent  String?        @map("story_content") @db.Text
-  storyImages   Json           @default("[]") @map("story_images")
-  categoryId    String         @map("category_id")
-  category      Category       @relation(fields: [categoryId], references: [id])
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?  @db.Text
+  price        Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  images       Json     @default("[]")
+  sizes        Json     @default("[]")
+  colors       Json     @default("[]")
+  stock        Int      @default(0)
+  featured     Boolean  @default(false)
+  trending     Boolean  @default(false)
+  storyTitle   String?  @map("story_title")
+  storyContent String?  @map("story_content") @db.Text
+  storyImages  Json     @default("[]") @map("story_images")
+
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
   cartItems     CartItem[]
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
   reviews       Review[]
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  @@index([categoryId])
-  @@index([price])
-  @@index([featured])
-  @@index([trending])
-  @@index([createdAt])
-  @@index([name])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   @@map("products")
 }
 
-// ---------------------------------------------
-// Cart & Wishlist Models
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Cart & Wishlist
+// -------------------------------------------------------
 
 model CartItem {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  productId String   @map("product_id")
-  quantity  Int      @default(1)
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  productId String @map("product_id")
+  quantity  Int    @default(1)
   size      Size?
   color     Color?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -154,27 +176,29 @@ model CartItem {
 }
 
 model WishlistItem {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  productId String   @map("product_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  userId    String @map("user_id")
+  productId String @map("product_id")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([userId, productId])
   @@map("wishlist_items")
 }
 
-// ---------------------------------------------
-// Order & Logistics
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Orders & Logistics
+// -------------------------------------------------------
 
 model Order {
   id     String @id @default(cuid())
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 
-  // Finance
+  // ---------- Finance ----------
   total          Decimal         @db.Decimal(10, 2)
   subtotal       Decimal         @db.Decimal(10, 2)
   tax            Decimal         @db.Decimal(10, 2)
@@ -183,46 +207,60 @@ model Order {
   promoCode      String?
   promoCodeUsage PromoCodeUsage?
 
-  // Status
+  // ---------- Status ----------
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
   paymentMethod String?       @map("payment_method")
 
-  // Payment IDs
+  // ---------- Payment IDs ----------
   razorpayOrderId   String? @map("razorpay_order_id")
   razorpayPaymentId String? @map("razorpay_payment_id")
 
-  // Address (Snapshot)
-  addressId         String   @map("address_id")
-  shippingName      String?
-  shippingPhone     String?
-  shippingStreet    String?
-  shippingCity      String?
-  shippingState     String?
-  shippingPincode   String?
-  shippingCountry   String?
+  // ---------- Billing Address ----------
+  addressId String?
+  address   Address? @relation("BillingAddress", fields: [addressId], references: [id])
+
+  // ---------- Shipping Address ----------
   shippingAddressId String?
   shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
 
-  // Items
+  // ---------- Shipping Snapshot ----------
+  shippingName    String?
+  shippingPhone   String?
+  shippingStreet  String?
+  shippingCity    String?
+  shippingState   String?
+  shippingPincode String?
+  shippingCountry String?
+
+  // ---------- Items ----------
   items OrderItem[]
 
-  // Logistics Timeline
+  // ---------- Logistics Timeline ----------
   shippedAt          DateTime?
   outForDeliveryAt   DateTime?
   deliveredAt        DateTime?
   completedAt        DateTime?
   cancelledAt        DateTime?
-  returnEligibleTill DateTime? // computed via deliveredAt + X days
-  trackingId         String?
-  courierName        String?
-  trackingUrl        String?
+  returnEligibleTill DateTime?
 
-  // Return / Exchange
+  trackingId  String?
+  courierName String?
+  trackingUrl String?
+
+  // ---------- Return / Exchange ----------
   returnStatus     ReturnStatus      @default(NONE)
   exchangeStatus   ExchangeStatus    @default(NONE)
   returnRequests   ReturnRequest[]
   exchangeRequests ExchangeRequest[]
+
+  // ---------- Refund Logic ----------
+  refundMethod RefundMethod?
+  refundStatus RefundStatus?
+  refundAmount Decimal?      @db.Decimal(10, 2)
+
+  // ---------- Wallet Back Reference ----------
+  walletTransactions WalletTransaction[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -231,23 +269,25 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String   @map("order_id")
-  productId String   @map("product_id")
+  id        String  @id @default(cuid())
+  orderId   String  @map("order_id")
+  productId String  @map("product_id")
   quantity  Int
-  price     Decimal  @db.Decimal(10, 2)
+  price     Decimal @db.Decimal(10, 2)
   size      Size?
   color     Color?
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id])
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("order_items")
 }
 
-// ---------------------------------------------
-// Address
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Address
+// -------------------------------------------------------
 
 model Address {
   id        String      @id @default(cuid())
@@ -261,65 +301,46 @@ model Address {
   type      AddressType @default(home)
   isDefault Boolean     @default(false)
   userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders    Order[]     @relation("ShippingAddress")
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
 
-  @@index([userId])
-  @@index([userId, isDefault])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  billingOrders  Order[] @relation("BillingAddress")
+  shippingOrders Order[] @relation("ShippingAddress")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("addresses")
 }
 
-// ---------------------------------------------
-// Reviews
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Reviews
+// -------------------------------------------------------
 
 model Review {
-  id          String        @id @default(cuid())
-  userId      String        @map("user_id")
-  productId   String        @map("product_id")
-  rating      Int
-  title       String?
-  comment     String?       @db.Text
-  media       Json?         @default("[]")
-  helpful     Int           @default(0)
-  notHelpful  Int           @default(0)
+  id         String  @id @default(cuid())
+  userId     String  @map("user_id")
+  productId  String  @map("product_id")
+  rating     Int
+  title      String?
+  comment    String? @db.Text
+  media      Json?   @default("[]")
+  helpful    Int     @default(0)
+  notHelpful Int     @default(0)
 
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  votes       ReviewVote[]  // <--- relation to votes
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt      @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, productId])
-  @@index([productId])
-  @@index([rating])
-  @@index([createdAt])
   @@map("reviews")
 }
 
-
-model ReviewVote {
-  id        String   @id @default(cuid())
-  reviewId  String
-  userId    String
-  vote      String   // "helpful" or "notHelpful"
-  createdAt DateTime @default(now())
-
-  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  @@unique([reviewId, userId]) // prevents multiple votes
-  @@map("review_votes")
-}
-
-
-
-
-// ---------------------------------------------
-// Promo Codes
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Promo Codes
+// -------------------------------------------------------
 
 model PromoCodeUsage {
   id      String   @id @default(cuid())
@@ -327,18 +348,36 @@ model PromoCodeUsage {
   userId  String   @map("user_id")
   orderId String?  @unique @map("order_id")
   usedAt  DateTime @default(now()) @map("used_at")
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order   Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
   @@unique([userId, code])
-  @@index([userId])
-  @@index([code])
   @@map("promo_code_usages")
 }
 
-// ---------------------------------------------
-// Return & Exchange
-// ---------------------------------------------
+model PromoCode {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  description   String?
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  minOrderValue Decimal?     @db.Decimal(10, 2)
+
+  firstOrderOnly Boolean @default(false)
+  showInBanner   Boolean @default(false)
+  isActive       Boolean @default(true)
+
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("promo_codes")
+}
+
+// -------------------------------------------------------
+//  Return & Exchange
+// -------------------------------------------------------
 
 model ReturnRequest {
   id        String       @id @default(cuid())
@@ -371,19 +410,19 @@ model ExchangeRequest {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// ---------------------------------------------
-// Admin Return Window Config
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Admin Config
+// -------------------------------------------------------
 
 model Settings {
   id               String   @id @default(cuid())
-  returnWindowDays Int      @default(7) // Admin adjustable (7, 10, 15 etc.)
+  returnWindowDays Int      @default(7)
   updatedAt        DateTime @updatedAt @map("updated_at")
 }
 
-// ---------------------------------------------
-// Reels
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Reels
+// -------------------------------------------------------
 
 model Reel {
   id        String   @id @default(cuid())
@@ -394,9 +433,9 @@ model Reel {
   @@map("reels")
 }
 
-// ---------------------------------------------
-// Enums
-// ---------------------------------------------
+// -------------------------------------------------------
+//  Enums
+// -------------------------------------------------------
 
 enum Role {
   USER
@@ -431,17 +470,8 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  COMPLETED
   CANCELLED
-  RETURNED
-
-  RETURN_REQUESTED
-  RETURN_REJECTED
-  RETURN_APPROVED
-
-  EXCHANGE_REQUESTED
-  EXCHANGE_REJECTED
-  EXCHANGE_APPROVED
-  EXCHANGED
 }
 
 enum PaymentStatus {
@@ -461,16 +491,48 @@ enum ReturnStatus {
   NONE
   REQUESTED
   APPROVED
+  PICKUP_SCHEDULED
+  PICKUP_COMPLETED
+  REFUND_INITIATED
+  REFUND_COMPLETED
   REJECTED
-  COMPLETED
 }
 
 enum ExchangeStatus {
   NONE
   REQUESTED
   APPROVED
+  PICKUP_SCHEDULED
+  PICKUP_COMPLETED
+  EXCHANGE_PROCESSING
+  EXCHANGE_COMPLETED
   REJECTED
+}
+
+enum RefundMethod {
+  ORIGINAL_SOURCE
+  WALLET
+}
+
+enum RefundStatus {
+  INITIATED
   COMPLETED
+}
+
+enum PaymentMethod {
+  PREPAID
+  COD
+}
+
+enum WalletType {
+  CREDIT
+  DEBIT
+}
+
+enum WalletReason {
+  REFUND
+  PURCHASE
+  MANUAL
 }
 
 model EmailOTP {
@@ -488,4 +550,9 @@ model EmailOTP {
 enum OTPPurpose {
   VERIFY_EMAIL
   RESET_PASSWORD
+}
+
+enum DiscountType {
+  PERCENT
+  FLAT
 }

@@ -4,28 +4,46 @@ import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
+type BannerPromo = {
+  id: string
+  code: string
+  discountType: "PERCENT" | "FLAT"
+  discountValue: number
+}
+
 export function PromoMarquee() {
   const [isDismissed, setIsDismissed] = useState(false)
+  const [promos, setPromos] = useState<BannerPromo[]>([])
 
   useEffect(() => {
-    // Check if marquee was dismissed in this session only
-    // Using sessionStorage instead of localStorage so it resets on each browser session
-    const dismissed = sessionStorage.getItem('promo-marquee-dismissed')
-    if (dismissed === 'true') {
+    // Dismiss state (session-only)
+    const dismissed = sessionStorage.getItem("promo-marquee-dismissed")
+    if (dismissed === "true") {
       setIsDismissed(true)
-    } else {
-      setIsDismissed(false)
     }
+
+    // 🔥 Fetch banner promos from DB
+    fetch("/api/promocodes/banner", { cache: "no-store" })
+      .then(res => res.json())
+      .then(setPromos)
+      .catch(() => setPromos([]))
   }, [])
 
   const handleDismiss = () => {
     setIsDismissed(true)
-    // Use sessionStorage so it only persists for the current browser session
-    sessionStorage.setItem('promo-marquee-dismissed', 'true')
+    sessionStorage.setItem("promo-marquee-dismissed", "true")
   }
 
-  if (isDismissed) {
+  // Nothing to show
+  if (isDismissed || promos.length === 0) {
     return null
+  }
+
+  const renderPromoText = (p: BannerPromo) => {
+    if (p.discountType === "PERCENT") {
+      return `Use Code: "${p.code}" Flat ${p.discountValue}% off`
+    }
+    return `Use Code: "${p.code}" Get ₹${p.discountValue} off`
   }
 
   return (
@@ -33,24 +51,21 @@ export function PromoMarquee() {
       <div className="flex items-center justify-between">
         {/* Scrolling marquee */}
         <div className="flex-1 overflow-hidden relative">
-          <div className="flex whitespace-nowrap" style={{
-            animation: 'marquee 30s linear infinite',
-          }}>
-            <div className="flex items-center gap-8 px-8">
-              <span className="font-semibold">Use Code: <strong>"FLATS"</strong> Flat 5% off on Pre-Paid Order</span>
-              <span className="mx-4">•</span>
-              <span className="font-semibold">Use Code: <strong>"SAMV20"</strong> Shop more than 1200 Get 200 off</span>
-              <span className="mx-4">•</span>
-              <span className="font-semibold">Use Code: <strong>"SAMV30"</strong> Shop more than 1600 get 300 off</span>
-            </div>
-            {/* Duplicate for seamless loop */}
-            <div className="flex items-center gap-8 px-8">
-              <span className="font-semibold">Use Code: <strong>"FLATS"</strong> Flat 5% off on Pre-Paid Order</span>
-              <span className="mx-4">•</span>
-              <span className="font-semibold">Use Code: <strong>"SAMV20"</strong> Shop more than 1200 Get 200 off</span>
-              <span className="mx-4">•</span>
-              <span className="font-semibold">Use Code: <strong>"SAMV30"</strong> Shop more than 1600 get 300 off</span>
-            </div>
+          <div
+            className="flex whitespace-nowrap"
+            style={{ animation: "marquee 30s linear infinite" }}
+          >
+            {[...promos, ...promos].map((promo, index) => (
+              <div
+                key={`${promo.id}-${index}`}
+                className="flex items-center gap-8 px-8"
+              >
+                <span className="font-semibold">
+                  {renderPromoText(promo)}
+                </span>
+                <span className="mx-4">•</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -79,4 +94,3 @@ export function PromoMarquee() {
     </div>
   )
 }
-

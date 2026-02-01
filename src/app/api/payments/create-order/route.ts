@@ -17,12 +17,20 @@ export async function POST(request: NextRequest) {
     }
 
     const {
-      amount,
       addressId,
       idempotencyKey,
       promoCode,
       paymentMethod,
     } = await request.json()
+
+    // 🔹 Fetch address for snapshot
+    const address = await prisma.address.findUnique({
+      where: { id: addressId },
+    })
+
+    if (!address) {
+      return NextResponse.json({ error: 'Invalid address' }, { status: 400 })
+    }
 
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: session.user.id },
@@ -87,12 +95,13 @@ export async function POST(request: NextRequest) {
     const finalAmount = subtotal + shipping - discount
     const normalizedPaymentMethod = paymentMethod === 'COD' ? 'COD' : 'ONLINE'
 
+    // 🔹 FIX: Remove undefined fields
     const orderItemsPayload = cartItems.map((ci) => ({
       productId: ci.productId,
       quantity: ci.quantity,
       price: Number(ci.product.price),
-      size: ci.size || undefined,
-      color: ci.color || undefined,
+      ...(ci.size ? { size: ci.size } : {}),
+      ...(ci.color ? { color: ci.color } : {}),
     }))
 
     // ---------- COD ORDER ----------
@@ -109,13 +118,27 @@ export async function POST(request: NextRequest) {
           paymentMethod: 'COD',
           paymentStatus: 'PENDING',
           status: 'CONFIRMED',
+
+          // ✅ Billing + Shipping
           addressId,
           shippingAddressId: addressId,
+
+          // ✅ Snapshot
+          shippingName: address.name,
+          shippingPhone: address.phone,
+          shippingStreet: address.street,
+          shippingCity: address.city,
+          shippingState: address.state,
+          shippingPincode: address.pincode,
+          shippingCountry: address.country,
+
           items: { create: orderItemsPayload },
         },
       })
 
-      await prisma.cartItem.deleteMany({ where: { userId: session.user.id } })
+      await prisma.cartItem.deleteMany({
+        where: { userId: session.user.id },
+      })
 
       return NextResponse.json({
         success: true,
@@ -165,6 +188,15 @@ export async function POST(request: NextRequest) {
           paymentMethod: 'ONLINE',
           paymentStatus: 'PENDING',
           status: 'PENDING',
+
+          shippingName: address.name,
+          shippingPhone: address.phone,
+          shippingStreet: address.street,
+          shippingCity: address.city,
+          shippingState: address.state,
+          shippingPincode: address.pincode,
+          shippingCountry: address.country,
+
           items: { create: orderItemsPayload },
         },
       })
@@ -179,6 +211,9 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error creating order:', error)
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to create order' },
+      { status: 500 }
+    )
   }
 }
