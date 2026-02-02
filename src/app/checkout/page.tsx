@@ -22,27 +22,6 @@ import { useCart } from "@/contexts/cart-context"
 import { formatPrice } from "@/lib/utils"
 import { toast } from "@/components/ui/use-toast"
 
-/* -------------------- TYPES -------------------- */
-
-type Address = {
-  id: string
-  name: string
-  phone: string
-  street: string
-  city: string
-  state: string
-  pincode: string
-  country: string
-  isDefault: boolean
-}
-
-type PromoDisplay = {
-  code: string
-  description: string
-  eligible: boolean
-  reasons: string[]
-}
-
 /* -------------------- PAGE -------------------- */
 
 export default function CheckoutPage() {
@@ -52,22 +31,22 @@ export default function CheckoutPage() {
 
   const { cartItems, clearCart } = useCart()
 
-  const [addresses, setAddresses] = useState<Address[]>([])
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
+  const [addresses, setAddresses] = useState<any[]>([])
+  const [selectedAddress, setSelectedAddress] = useState<any>(null)
 
   const [processing, setProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online")
 
-  /* Promo State */
+  /* Promo state */
   const [promoCode, setPromoCode] = useState("")
   const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null)
   const [discount, setDiscount] = useState(0)
   const [applyingPromo, setApplyingPromo] = useState(false)
 
-  const [allPromos, setAllPromos] = useState<PromoDisplay[]>([])
+  const [allPromos, setAllPromos] = useState<any[]>([])
   const [isNewUser, setIsNewUser] = useState(false)
 
-  /* -------------------- TOTALS (SINGLE SOURCE) -------------------- */
+  /* -------------------- TOTALS -------------------- */
 
   const subtotal = useMemo(
     () =>
@@ -79,79 +58,59 @@ export default function CheckoutPage() {
   )
 
   const shipping = subtotal > 1000 ? 0 : 100
-  const orderTotal = Math.max(subtotal + shipping - discount, 0)
+  const total = Math.max(subtotal + shipping - discount, 0)
 
-  /* -------------------- FETCH DATA -------------------- */
+  /* -------------------- DATA -------------------- */
 
   const fetchAddresses = useCallback(async () => {
     const res = await fetch("/api/addresses")
     if (!res.ok) return
     const data = await res.json()
     setAddresses(data.addresses)
-    const def = data.addresses.find((a: Address) => a.isDefault)
+    const def = data.addresses.find((a: any) => a.isDefault)
     if (def) setSelectedAddress(def)
   }, [])
 
   const fetchPromoDetails = useCallback(async () => {
-    try {
-      const res = await fetch("/api/promo-codes/list")
-      const data = await res.json()
+    const res = await fetch("/api/promocodes/available")
+    const data = await res.json()
+    setAllPromos(data.promoCodes || [])
 
-      setAllPromos(
-        (data.promoCodes || []).map((p: any) => ({
-          code: p.code,
-          description: p.description,
-          eligible: p.eligible,
-          reasons: p.reasons ?? [],
-        }))
-      )
-
-      const userRes = await fetch("/api/profile")
-      const user = await userRes.json()
-      setIsNewUser(user?.isNewUser || false)
-    } catch {
-      console.error("Failed to load promos")
-    }
+    const userRes = await fetch("/api/profile")
+    const user = await userRes.json()
+    setIsNewUser(user?.isNewUser || false)
   }, [])
 
-  /* -------------------- PROMO HANDLERS -------------------- */
+  /* -------------------- PROMO -------------------- */
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
-      return toast({
-        title: "Promo code required",
-        variant: "destructive",
-      })
+      return toast({ title: "Enter promo code", variant: "destructive" })
     }
 
     setApplyingPromo(true)
 
     try {
-      const res = await fetch("/api/promo-codes/validate", {
+      const res = await fetch("/api/promocodes/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          promoCode: promoCode.trim(),
-          subtotal,
-        }),
+        body: JSON.stringify({ promoCode, subtotal }),
       })
 
       const data = await res.json()
       if (!res.ok) {
-        return toast({
-          title: "Invalid promo",
-          description: data.error,
-          variant: "destructive",
-        })
+        throw new Error(data.error)
       }
 
       setAppliedPromoCode(data.code)
-      setDiscount(Number(data.discount) || 0)
+      setDiscount(Number(data.discount))
 
       toast({
         title: "Promo applied",
         description: `You saved ${formatPrice(data.discount)}`,
       })
+    } catch (err: any) {
+      toast({ title: err.message, variant: "destructive" })
     } finally {
       setApplyingPromo(false)
     }
@@ -167,17 +126,7 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     if (!selectedAddress) {
-      return toast({
-        title: "Select address",
-        variant: "destructive",
-      })
-    }
-
-    if (cartItems.length === 0) {
-      return toast({
-        title: "Cart empty",
-        variant: "destructive",
-      })
+      return toast({ title: "Select address", variant: "destructive" })
     }
 
     setProcessing(true)
@@ -187,9 +136,9 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: orderTotal,
+          amount: total,
           addressId: selectedAddress.id,
-          promoCode: appliedPromoCode || undefined,
+          promoCode: appliedPromoCode ?? undefined,
           paymentMethod: paymentMethod.toUpperCase(),
         }),
       })
@@ -215,20 +164,14 @@ export default function CheckoutPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...response, orderId: order.orderId }),
           })
-
           clearCart()
           router.push(`/orders/${order.orderId}`)
         },
-        theme: { color: "#dc2626" },
       })
 
       rzp.open()
     } catch (err: any) {
-      toast({
-        title: "Payment failed",
-        description: err.message,
-        variant: "destructive",
-      })
+      toast({ title: err.message, variant: "destructive" })
     } finally {
       setProcessing(false)
     }
@@ -281,7 +224,9 @@ export default function CheckoutPage() {
                   <div className="flex gap-2">
                     <Input
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        setPromoCode(e.target.value.toUpperCase())
+                      }
                       placeholder="Enter promo code"
                     />
                     <Button onClick={handleApplyPromoCode} disabled={applyingPromo}>
@@ -303,7 +248,7 @@ export default function CheckoutPage() {
                   shipping={shipping}
                   discount={discount}
                   promoCode={appliedPromoCode}
-                  total={orderTotal}
+                  total={total}
                 />
 
                 <div className="pt-4 border-t space-y-4">
@@ -325,7 +270,7 @@ export default function CheckoutPage() {
                   <Button className="w-full" onClick={handlePayment} disabled={processing}>
                     {paymentMethod === "cod"
                       ? "Place COD Order"
-                      : `Pay ${formatPrice(orderTotal)}`}
+                      : `Pay ${formatPrice(total)}`}
                   </Button>
 
                   {error && (

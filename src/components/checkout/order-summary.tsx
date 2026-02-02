@@ -57,14 +57,14 @@ export function OrderSummary({
       <CardContent className="space-y-4">
         {/* Items */}
         <div className="space-y-3">
-          {items.map(item => (
-            <div key={item.id} className="flex gap-3 p-3 bg-muted/30">
+          {items.map((item) => (
+            <div key={item.id} className="flex gap-3 p-3 bg-muted/30 rounded">
               <Image
                 src={item.product.images[0] || "/placeholder-product.jpg"}
                 alt={item.product.name}
                 width={48}
                 height={48}
-                className="object-cover"
+                className="object-cover rounded"
               />
 
               <div className="flex-1">
@@ -77,7 +77,7 @@ export function OrderSummary({
                   {item.color && <Badge variant="outline">{item.color}</Badge>}
                 </div>
 
-                <div className="flex justify-between mt-2">
+                <div className="flex justify-between mt-2 text-sm">
                   <span>Qty: {item.quantity}</span>
                   <span className="font-semibold">
                     {formatPrice(item.product.price * item.quantity)}
@@ -99,15 +99,13 @@ export function OrderSummary({
 
           <div className="flex justify-between">
             <span>Shipping</span>
-            <span>
-              {shipping === 0 ? "FREE" : formatPrice(shipping)}
-            </span>
+            <span>{shipping === 0 ? "FREE" : formatPrice(shipping)}</span>
           </div>
 
           {discount > 0 && (
-            <div className="flex justify-between text-green-600">
+            <div className="flex justify-between text-green-600 font-medium">
               <span>
-                Discount {promoCode && `(${promoCode})`}
+                Discount {promoCode ? `(${promoCode})` : ""}
               </span>
               <span>-{formatPrice(discount)}</span>
             </div>

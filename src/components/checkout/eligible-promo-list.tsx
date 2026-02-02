@@ -7,7 +7,7 @@ export interface PromoDisplay {
   code: string
   description: string
   eligible: boolean
-  reasons: string[]
+  reasons?: string[]
 }
 
 interface EligiblePromoListProps {
@@ -17,39 +17,50 @@ interface EligiblePromoListProps {
   onApply?: (code: string) => void
 }
 
-
-export function EligiblePromoList({ items, subtotal, isNewUser }: EligiblePromoListProps) {
+export function EligiblePromoList({
+  items,
+  subtotal,
+  isNewUser,
+  onApply,
+}: EligiblePromoListProps) {
   if (!items || items.length === 0) return null
 
   return (
     <div className="mb-3 border rounded p-3 bg-muted/20 space-y-2">
       <p className="text-sm font-semibold">Available Offers</p>
 
-      {items.map(promo => (
-        <div
-          key={promo.code}
-          className={cn(
-            "p-2 border rounded flex justify-between items-start",
-            promo.eligible ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
-          )}
-        >
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm">{promo.code}</span>
-            <span className="text-xs">{promo.description}</span>
-            {!promo.eligible && (
-              <span className="text-[10px] text-red-600 mt-1">
-                {promo.reasons.join(", ")}
-              </span>
+      {items.map((promo) => {
+        const reasons = promo.reasons ?? []
+
+        return (
+          <div
+            key={promo.code}
+            className={cn(
+              "p-2 border rounded flex justify-between items-start",
+              promo.eligible
+                ? "border-green-500 bg-green-50"
+                : "border-red-500 bg-red-50"
+            )}
+          >
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm">{promo.code}</span>
+              <span className="text-xs">{promo.description}</span>
+
+              {!promo.eligible && reasons.length > 0 && (
+                <span className="text-[10px] text-red-600 mt-1">
+                  {reasons.join(", ")}
+                </span>
+              )}
+            </div>
+
+            {promo.eligible ? (
+              <BadgeCheck className="w-4 h-4 text-green-600" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-red-600" />
             )}
           </div>
-
-          {promo.eligible ? (
-            <BadgeCheck className="w-4 h-4 text-green-600" />
-          ) : (
-            <AlertCircle className="w-4 h-4 text-red-600" />
-          )}
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
