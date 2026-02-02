@@ -1,26 +1,41 @@
-import { prisma } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { prisma } from "@/lib/db"
+import { auth } from "@/lib/auth"
 
+/* -------------------- PATCH (approve / reject) -------------------- */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { action } = await req.json()
+  const session = await auth()
 
-  if (!["approve", "reject", "refund"].includes(action)) {
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 })
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const statusMap: Record<string, string> = {
-    approve: "APPROVED",
-    reject: "REJECTED",
-    refund: "REFUND_INITIATED",
+  const { id } = await params
+  const body = await req.json()
+  const { status } = body as { status: "APPROVED" | "REJECTED" }
+
+  if (!["APPROVED", "REJECTED"].includes(status)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 })
   }
 
-  const updated = await prisma.returnRequest.update({
-    where: { id: params.id },
-    data: { status: statusMap[action] as any },
+  const updatedReturn = await prisma.returnRequest.update({
+    where: { id },
+    data: { status },
+    include: {
+      order: {
+        include: {
+          items: {
+            include: { product: true },
+          },
+          address: true,
+        },
+      },
+      user: true,
+    },
   })
 
-  return NextResponse.json(updated)
+  return NextResponse.json({ success: true, return: updatedReturn })
 }
