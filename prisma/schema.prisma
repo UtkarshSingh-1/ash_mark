@@ -78,6 +78,7 @@ model User {
   addresses        Address[]
   wishlistItems    WishlistItem[]
   reviews          Review[]
+  reviewVotes      ReviewVote[]
   promoCodeUsages  PromoCodeUsage[]
   returnRequests   ReturnRequest[]
   exchangeRequests ExchangeRequest[]
@@ -331,12 +332,30 @@ model Review {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  votes ReviewVote[]   // ✅ CORRECT PLACE
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, productId])
   @@map("reviews")
 }
+
+
+model ReviewVote {
+  id       String @id @default(cuid())
+  reviewId String
+  userId   String
+  vote     String
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@map("review_votes")
+}
+
+
 
 // -------------------------------------------------------
 //  Promo Codes

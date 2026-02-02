@@ -4,17 +4,23 @@ import { prisma } from "@/lib/db"
 
 export async function POST(req: Request) {
   const session = await auth()
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
 
   const { reviewId, vote } = await req.json()
+
+  if (!reviewId || !vote) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
+  }
 
   const existingVote = await prisma.reviewVote.findUnique({
     where: {
       reviewId_userId: {
         reviewId,
-        userId: session.user.id
-      }
-    }
+        userId: session.user.id,
+      },
+    },
   })
 
   if (existingVote) {
@@ -22,15 +28,19 @@ export async function POST(req: Request) {
   }
 
   await prisma.reviewVote.create({
-    data: { reviewId, userId: session.user.id, vote }
+    data: {
+      reviewId,
+      userId: session.user.id,
+      vote,
+    },
   })
 
   await prisma.review.update({
     where: { id: reviewId },
     data: {
       helpful: vote === "helpful" ? { increment: 1 } : undefined,
-      notHelpful: vote === "notHelpful" ? { increment: 1 } : undefined
-    }
+      notHelpful: vote === "notHelpful" ? { increment: 1 } : undefined,
+    },
   })
 
   return NextResponse.json({ success: true })
