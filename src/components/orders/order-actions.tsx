@@ -31,6 +31,7 @@ export function OrderActions({ order }: { order: any }) {
         <CardHeader>
           <CardTitle>Order Actions</CardTitle>
         </CardHeader>
+
         <CardContent>
           <Button className="w-full bg-muted/30">
             <Download className="w-4 h-4 mr-2" /> Download Invoice
@@ -38,16 +39,26 @@ export function OrderActions({ order }: { order: any }) {
 
           <Separator className="my-4" />
 
-          {eligible && order.items.map((item: any) => (
-            <div key={item.id} className="flex gap-2 mb-2">
-              <Button variant="outline" className="flex-1" onClick={() => openReturn(item)}>
-                <RotateCcw className="w-4 h-4 mr-2" /> Return
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => openExchange(item)}>
-                <RefreshCcw className="w-4 h-4 mr-2" /> Exchange
-              </Button>
-            </div>
-          ))}
+          {eligible &&
+            order.items.map((item: any) => (
+              <div key={item.id} className="flex gap-2 mb-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openReturn(item)}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" /> Return
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openExchange(item)}
+                >
+                  <RefreshCcw className="w-4 h-4 mr-2" /> Exchange
+                </Button>
+              </div>
+            ))}
         </CardContent>
       </Card>
 
@@ -68,11 +79,11 @@ export function OrderActions({ order }: { order: any }) {
           open={exchangeOpen}
           onCloseAction={() => setExchangeOpen(false)}
           item={{
+            id: selectedItem.id, // ✅ REQUIRED
             orderId: order.id,
-            itemId: selectedItem.id,
             productName: selectedItem.product.name,
-            oldSize: selectedItem.size,
-            oldColor: selectedItem.color,
+            sizes: selectedItem.product.sizes ?? [], // ✅ REQUIRED
+            colors: selectedItem.product.colors ?? [], // ✅ REQUIRED
           }}
         />
       )}
