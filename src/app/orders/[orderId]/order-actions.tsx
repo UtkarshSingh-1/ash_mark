@@ -12,7 +12,11 @@ type Order = {
     quantity: number
     size?: string | null
     color?: string | null
-    product: { name: string; sizes?: string[] }
+    product: {
+      name: string
+      sizes?: string[]
+      colors?: string[]
+    }
   }>
 }
 
@@ -23,11 +27,11 @@ type ReturnItemData = {
 }
 
 type ExchangeItemData = {
+  id: string
   orderId: string
-  itemId: string
   productName: string
-  oldSize?: string | null
-  oldColor?: string | null
+  sizes: string[]
+  colors: string[]
 }
 
 export default function OrderActions({ order }: { order: Order }) {
@@ -41,25 +45,30 @@ export default function OrderActions({ order }: { order: Order }) {
       <div className="space-y-2 mt-4">
         {order.items.map((item) => (
           <div key={item.id} className="flex gap-2">
-            <button 
-              className="btn" 
-              onClick={() => setReturnItem({
-                id: item.id,
-                orderId: String(order.id),
-                productName: item.product.name,
-              })}
+            <button
+              className="btn"
+              onClick={() =>
+                setReturnItem({
+                  id: item.id,
+                  orderId: String(order.id),
+                  productName: item.product.name,
+                })
+              }
             >
               Return
             </button>
-            <button 
-              className="btn" 
-              onClick={() => setExchangeItem({
-                orderId: String(order.id),
-                itemId: item.id,
-                productName: item.product.name,
-                oldSize: item.size ?? null,
-                oldColor: item.color ?? null,
-              })}
+
+            <button
+              className="btn"
+              onClick={() =>
+                setExchangeItem({
+                  id: item.id, // ✅ REQUIRED
+                  orderId: String(order.id),
+                  productName: item.product.name,
+                  sizes: item.product.sizes ?? [], // ✅ REQUIRED
+                  colors: item.product.colors ?? [], // ✅ REQUIRED
+                })
+              }
             >
               Exchange
             </button>
@@ -68,19 +77,20 @@ export default function OrderActions({ order }: { order: Order }) {
       </div>
 
       {returnItem && (
-        <ReturnModal 
-          open 
-          item={returnItem} 
-          onCloseAction={() => setReturnItem(null)} 
+        <ReturnModal
+          open
+          item={returnItem}
+          onCloseAction={() => setReturnItem(null)}
         />
       )}
+
       {exchangeItem && (
-        <ExchangeModal 
-          open 
-          item={exchangeItem} 
-          onCloseAction={() => setExchangeItem(null)} 
+        <ExchangeModal
+          open
+          item={exchangeItem}
+          onCloseAction={() => setExchangeItem(null)}
         />
       )}
     </>
-  );
+  )
 }
