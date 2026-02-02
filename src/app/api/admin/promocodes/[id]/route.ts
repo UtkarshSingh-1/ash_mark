@@ -49,8 +49,10 @@ export async function PATCH(
       discountValue: body.discountValue,
       minOrderValue: body.minOrderValue,
       maxDiscount: body.maxDiscount,
-      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+      firstOrderOnly: body.firstOrderOnly,
+      showInBanner: body.showInBanner, // ✅ CRITICAL FIX
       isActive: body.isActive,
+      expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
     },
   })
 

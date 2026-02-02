@@ -12,15 +12,24 @@ export async function GET() {
       ],
     },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      code: true,
+      description: true,
+      discountType: true,
+      discountValue: true,
+    },
   })
 
   return NextResponse.json(
     promos.map(p => ({
+      id: p.id,
       code: p.code,
-      text:
-        p.discountType === "PERCENT"
-          ? `Use Code "${p.code}" – Flat ${Number(p.discountValue)}% OFF`
-          : `Use Code "${p.code}" – Get ₹${Number(p.discountValue)} OFF`,
+      description:
+        p.description ??
+        (p.discountType === "PERCENT"
+          ? `Flat ${Number(p.discountValue)}% OFF`
+          : `Get ₹${Number(p.discountValue)} OFF`),
     }))
   )
 }

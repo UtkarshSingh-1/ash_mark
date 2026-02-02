@@ -22,6 +22,14 @@ import { useCart } from "@/contexts/cart-context"
 import { formatPrice } from "@/lib/utils"
 import { toast } from "@/components/ui/use-toast"
 
+/* -------------------- TYPES -------------------- */
+
+type PromoDisplay = {
+  code: string
+  description: string
+  eligible: boolean
+}
+
 /* -------------------- PAGE -------------------- */
 
 export default function CheckoutPage() {
@@ -43,7 +51,7 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0)
   const [applyingPromo, setApplyingPromo] = useState(false)
 
-  const [allPromos, setAllPromos] = useState<any[]>([])
+  const [allPromos, setAllPromos] = useState<PromoDisplay[]>([])
   const [isNewUser, setIsNewUser] = useState(false)
 
   /* -------------------- TOTALS -------------------- */
@@ -72,20 +80,42 @@ export default function CheckoutPage() {
   }, [])
 
   const fetchPromoDetails = useCallback(async () => {
-    const res = await fetch("/api/promocodes/available")
-    const data = await res.json()
-    setAllPromos(data.promoCodes || [])
+    try {
+      const res = await fetch("/api/promocodes/available", { cache: "no-store" })
+      const data = await res.json()
 
-    const userRes = await fetch("/api/profile")
-    const user = await userRes.json()
-    setIsNewUser(user?.isNewUser || false)
-  }, [])
+      const promos: PromoDisplay[] = (data.promoCodes || []).map((p: any) => {
+        const eligible =
+          (!p.minOrderValue || subtotal >= Number(p.minOrderValue)) &&
+          !(p.prepaidOnly && paymentMethod !== "online")
+
+        return {
+          code: p.code,
+          description: p.description,
+          eligible,
+        }
+      })
+
+      setAllPromos(promos)
+
+      const userRes = await fetch("/api/profile")
+      const user = await userRes.json()
+      setIsNewUser(user?.isNewUser || false)
+    } catch {
+      setAllPromos([])
+    }
+  }, [subtotal, paymentMethod])
 
   /* -------------------- PROMO -------------------- */
 
-  const handleApplyPromoCode = async () => {
-    if (!promoCode.trim()) {
-      return toast({ title: "Enter promo code", variant: "destructive" })
+  const handleApplyPromoCode = async (codeOverride?: string) => {
+    const codeToApply = (codeOverride ?? promoCode).trim()
+
+    if (!codeToApply) {
+      return toast({
+        title: "Enter promo code",
+        variant: "destructive",
+      })
     }
 
     setApplyingPromo(true)
@@ -94,23 +124,29 @@ export default function CheckoutPage() {
       const res = await fetch("/api/promocodes/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ promoCode, subtotal }),
+        body: JSON.stringify({
+          promoCode: codeToApply,
+          subtotal,
+          paymentMethod: paymentMethod === "online" ? "ONLINE" : "COD",
+        }),
       })
 
       const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error)
-      }
+      if (!res.ok) throw new Error(data.error)
 
+      setPromoCode(codeToApply)
       setAppliedPromoCode(data.code)
-      setDiscount(Number(data.discount))
+      setDiscount(Number(data.discount) || 0)
 
       toast({
         title: "Promo applied",
         description: `You saved ${formatPrice(data.discount)}`,
       })
     } catch (err: any) {
-      toast({ title: err.message, variant: "destructive" })
+      toast({
+        title: err.message || "Invalid promo",
+        variant: "destructive",
+      })
     } finally {
       setApplyingPromo(false)
     }
@@ -127,6 +163,10 @@ export default function CheckoutPage() {
   const handlePayment = async () => {
     if (!selectedAddress) {
       return toast({ title: "Select address", variant: "destructive" })
+    }
+
+    if (cartItems.length === 0) {
+      return toast({ title: "Cart is empty", variant: "destructive" })
     }
 
     setProcessing(true)
@@ -164,6 +204,7 @@ export default function CheckoutPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...response, orderId: order.orderId }),
           })
+
           clearCart()
           router.push(`/orders/${order.orderId}`)
         },
@@ -171,7 +212,11 @@ export default function CheckoutPage() {
 
       rzp.open()
     } catch (err: any) {
-      toast({ title: err.message, variant: "destructive" })
+      toast({
+        title: "Payment failed",
+        description: err.message,
+        variant: "destructive",
+      })
     } finally {
       setProcessing(false)
     }
@@ -183,7 +228,7 @@ export default function CheckoutPage() {
     if (!session) router.push("/login")
     fetchAddresses()
     fetchPromoDetails()
-  }, [session])
+  }, [session, fetchAddresses, fetchPromoDetails])
 
   /* -------------------- UI -------------------- */
 
@@ -214,10 +259,7 @@ export default function CheckoutPage() {
                   items={allPromos}
                   subtotal={subtotal}
                   isNewUser={isNewUser}
-                  onApply={(code) => {
-                    setPromoCode(code)
-                    handleApplyPromoCode()
-                  }}
+                  onApply={(code) => handleApplyPromoCode(code)}
                 />
 
                 {!appliedPromoCode ? (
@@ -229,14 +271,21 @@ export default function CheckoutPage() {
                       }
                       placeholder="Enter promo code"
                     />
-                    <Button onClick={handleApplyPromoCode} disabled={applyingPromo}>
+                    <Button
+                      onClick={() => handleApplyPromoCode()}
+                      disabled={applyingPromo}
+                    >
                       Apply
                     </Button>
                   </div>
                 ) : (
                   <div className="flex justify-between bg-black text-white p-2 rounded">
                     <span>{appliedPromoCode}</span>
-                    <Button size="sm" variant="ghost" onClick={handleRemovePromoCode}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRemovePromoCode}
+                    >
                       Remove
                     </Button>
                   </div>
@@ -255,7 +304,9 @@ export default function CheckoutPage() {
                   <Label>Payment Method</Label>
                   <RadioGroup
                     value={paymentMethod}
-                    onValueChange={(v) => setPaymentMethod(v as any)}
+                    onValueChange={(v) =>
+                      setPaymentMethod(v as "online" | "cod")
+                    }
                   >
                     <div className="flex gap-2">
                       <RadioGroupItem value="online" id="online" />
@@ -267,7 +318,11 @@ export default function CheckoutPage() {
                     </div>
                   </RadioGroup>
 
-                  <Button className="w-full" onClick={handlePayment} disabled={processing}>
+                  <Button
+                    className="w-full"
+                    onClick={handlePayment}
+                    disabled={processing}
+                  >
                     {paymentMethod === "cod"
                       ? "Place COD Order"
                       : `Pay ${formatPrice(total)}`}

@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { auth } from "@/lib/auth"
 
 export async function GET() {
+  const session = await auth()
+  if (!session?.user) return NextResponse.json({ promoCodes: [] })
+
   const promos = await prisma.promoCode.findMany({
     where: {
       isActive: true,
-      OR: [
-        { expiresAt: null },
-        { expiresAt: { gte: new Date() } },
-      ],
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     },
     orderBy: { createdAt: "desc" },
   })
@@ -16,14 +17,9 @@ export async function GET() {
   return NextResponse.json({
     promoCodes: promos.map(p => ({
       code: p.code,
-      description:
-        p.discountType === "PERCENT"
-          ? `Flat ${Number(p.discountValue)}% off`
-          : `Get ₹${Number(p.discountValue)} off`,
-      minOrderValue: p.minOrderValue
-        ? Number(p.minOrderValue)
-        : null,
-      firstOrderOnly: p.firstOrderOnly,
+      description: p.description,
+      minOrderValue: p.minOrderValue,
+      prepaidOnly: p.code === "PRE05",
     })),
   })
 }

@@ -3,17 +3,18 @@ import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
 
 export async function POST(req: Request) {
-  const { promoCode, subtotal } = await req.json()
   const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const { promoCode, subtotal, paymentMethod } = await req.json()
 
   const promo = await prisma.promoCode.findFirst({
     where: {
-      code: promoCode.toUpperCase(),
+      code: promoCode,
       isActive: true,
-      OR: [
-        { expiresAt: null },
-        { expiresAt: { gte: new Date() } },
-      ],
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     },
   })
 
@@ -23,30 +24,33 @@ export async function POST(req: Request) {
 
   if (promo.minOrderValue && subtotal < Number(promo.minOrderValue)) {
     return NextResponse.json(
-      { error: `Minimum order value ₹${promo.minOrderValue}` },
+      { error: `Minimum order ₹${promo.minOrderValue} required` },
       { status: 400 }
     )
   }
 
-  if (promo.firstOrderOnly && session?.user?.id) {
-    const orders = await prisma.order.count({
-      where: { userId: session.user.id },
-    })
-    if (orders > 0) {
-      return NextResponse.json(
-        { error: "Only valid for first order" },
-        { status: 400 }
-      )
-    }
+  // PREPAID ONLY RULE (PRE05)
+  if (promo.code === "PRE05" && paymentMethod !== "ONLINE") {
+    return NextResponse.json(
+      { error: "This coupon is valid only for prepaid orders" },
+      { status: 400 }
+    )
   }
 
-  const discount =
-    promo.discountType === "PERCENT"
-      ? (subtotal * Number(promo.discountValue)) / 100
-      : Number(promo.discountValue)
+  let discount = 0
+
+  if (promo.discountType === "PERCENT") {
+    discount = (subtotal * Number(promo.discountValue)) / 100
+  } else {
+    discount = Number(promo.discountValue)
+  }
+
+  if (promo.maxDiscount) {
+    discount = Math.min(discount, Number(promo.maxDiscount))
+  }
 
   return NextResponse.json({
     code: promo.code,
-    discount: Math.min(discount, subtotal),
+    discount,
   })
 }

@@ -1,13 +1,12 @@
 "use client"
 
-import { BadgeCheck, AlertCircle } from "lucide-react"
+import { BadgeCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface PromoDisplay {
   code: string
   description: string
   eligible: boolean
-  reasons?: string[]
 }
 
 interface EligiblePromoListProps {
@@ -19,48 +18,43 @@ interface EligiblePromoListProps {
 
 export function EligiblePromoList({
   items,
-  subtotal,
-  isNewUser,
   onApply,
 }: EligiblePromoListProps) {
-  if (!items || items.length === 0) return null
+  const eligiblePromos = items.filter(p => p.eligible)
+
+  if (eligiblePromos.length === 0) return null
 
   return (
-    <div className="mb-3 border rounded p-3 bg-muted/20 space-y-2">
-      <p className="text-sm font-semibold">Available Offers</p>
+    <div className="mb-3 border rounded p-3 bg-green-50 space-y-2">
+      <p className="text-sm font-semibold text-green-700">
+        Available Offers
+      </p>
 
-      {items.map((promo) => {
-        const reasons = promo.reasons ?? []
-
-        return (
-          <div
-            key={promo.code}
-            className={cn(
-              "p-2 border rounded flex justify-between items-start",
-              promo.eligible
-                ? "border-green-500 bg-green-50"
-                : "border-red-500 bg-red-50"
-            )}
-          >
-            <div className="flex flex-col">
-              <span className="font-semibold text-sm">{promo.code}</span>
-              <span className="text-xs">{promo.description}</span>
-
-              {!promo.eligible && reasons.length > 0 && (
-                <span className="text-[10px] text-red-600 mt-1">
-                  {reasons.join(", ")}
-                </span>
-              )}
-            </div>
-
-            {promo.eligible ? (
-              <BadgeCheck className="w-4 h-4 text-green-600" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-red-600" />
-            )}
+      {eligiblePromos.map(promo => (
+        <div
+          key={promo.code}
+          className={cn(
+            "p-2 border border-green-500 rounded flex justify-between items-center"
+          )}
+        >
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">
+              {promo.code}
+            </span>
+            <span className="text-xs text-green-700">
+              {promo.description}
+            </span>
           </div>
-        )
-      })}
+
+          <button
+            onClick={() => onApply?.(promo.code)}
+            className="flex items-center gap-1 text-xs font-semibold text-green-700"
+          >
+            <BadgeCheck className="w-4 h-4" />
+            APPLY
+          </button>
+        </div>
+      ))}
     </div>
   )
 }
