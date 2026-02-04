@@ -4,50 +4,67 @@
 
 @layer base {
   :root {
-    /* --- Warm Beige Base Theme --- */
-    --background: 35 40% 96%;           /* soft beige background */
-    --foreground: 25 20% 20%;          /* dark brown text */
-    --card: 35 40% 98%;
-    --card-foreground: 25 20% 20%;
-    --popover: 35 40% 98%;
-    --popover-foreground: 25 20% 20%;
-    --primary: 15 60% 40%;             /* warm terracotta primary */
-    --primary-foreground: 35 40% 96%;
-    --secondary: 35 25% 90%;           /* lighter beige secondary */
-    --secondary-foreground: 25 20% 20%;
-    --muted: 35 20% 88%;
-    --muted-foreground: 25 15% 35%;
-    --accent: 15 60% 40%;
-    --accent-foreground: 35 40% 96%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 35 40% 96%;
-    --border: 35 25% 85%;
-    --input: 35 25% 85%;
-    --ring: 15 60% 40%;
-    --radius: 0.5rem;
+   /* Brand Color System */
+  --background: 35 33% 90%;          /* Warm Beige #EDE6D8 */
+  --foreground: 0 0% 18%;            /* Charcoal #2F2F2F */
+
+  --card: 0 0% 98%;                  /* Off White #FAFAFA */
+  --card-foreground: 0 0% 18%;
+
+  --popover: 0 0% 98%;
+  --popover-foreground: 0 0% 18%;
+
+  --primary: 28 65% 30%;             /* Brown #7F461B */
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 35 33% 90%;
+  --secondary-foreground: 0 0% 18%;
+
+  --muted: 35 20% 85%;
+  --muted-foreground: 0 0% 40%;
+
+  --accent: 28 65% 30%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 65% 45%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 35 20% 80%;
+  --input: 35 20% 80%;
+  --ring: 28 65% 30%;
+
+  --radius: 0.5rem;
   }
 
   /* optional “light” variant if needed */
   .light {
-    --background: 35 40% 96%;
-    --foreground: 25 20% 20%;
-    --card: 35 40% 98%;
-    --card-foreground: 25 20% 20%;
-    --popover: 35 40% 98%;
-    --popover-foreground: 25 20% 20%;
-    --primary: 15 60% 40%;
-    --primary-foreground: 35 40% 96%;
-    --secondary: 35 25% 90%;
-    --secondary-foreground: 25 20% 20%;
-    --muted: 35 20% 88%;
-    --muted-foreground: 25 15% 35%;
-    --accent: 15 60% 40%;
-    --accent-foreground: 35 40% 96%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 35 40% 96%;
-    --border: 35 25% 85%;
-    --input: 35 25% 85%;
-    --ring: 15 60% 40%;
+ --background: 35 33% 90%;
+  --foreground: 0 0% 18%;
+
+  --card: 0 0% 98%;
+  --card-foreground: 0 0% 18%;
+
+  --popover: 0 0% 98%;
+  --popover-foreground: 0 0% 18%;
+
+  --primary: 28 65% 30%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 35 33% 90%;
+  --secondary-foreground: 0 0% 18%;
+
+  --muted: 35 20% 85%;
+  --muted-foreground: 0 0% 40%;
+
+  --accent: 28 65% 30%;
+  --accent-foreground: 0 0% 98%;
+
+  --destructive: 0 65% 45%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 35 20% 80%;
+  --input: 35 20% 80%;
+  --ring: 28 65% 30%;
   }
 }
 
