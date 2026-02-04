@@ -16,6 +16,10 @@ const updateProductSchema = z.object({
   featured: z.boolean().default(false),
   trending: z.boolean().default(false),
   slug: z.string().min(1, "Slug is required"),
+  hasStory: z.boolean().optional(),
+  storyTitle: z.string().optional(),
+  storyContent: z.string().optional(),
+  storyImages: z.array(z.string()).optional(),
 })
 
 interface ProductParams {
@@ -68,6 +72,13 @@ export async function PUT(
       )
     }
 
+    if (validatedData.hasStory && (!validatedData.storyTitle?.trim() || !validatedData.storyContent?.trim())) {
+      return NextResponse.json(
+        { error: 'Story title and content are required when story is enabled' },
+        { status: 400 }
+      )
+    }
+
     const allowedSizes = ['XS','S','M','L','XL','XXL']
     const allowedColors = ['BLACK','WHITE','GRAY','RED','BLUE','GREEN','YELLOW','ORANGE','PURPLE','PINK']
 
@@ -82,9 +93,21 @@ export async function PUT(
     const product = await prisma.product.update({
       where: { id: productId },
       data: {
-        ...validatedData,
+        name: validatedData.name,
+        description: validatedData.description,
+        price: validatedData.price,
+        comparePrice: validatedData.comparePrice,
+        images: validatedData.images,
         sizes: sizesEnum,
         colors: colorsEnum,
+        stock: validatedData.stock,
+        featured: validatedData.featured,
+        trending: validatedData.trending,
+        slug: validatedData.slug,
+        category: { connect: { id: validatedData.categoryId } },
+        storyTitle: validatedData.hasStory ? validatedData.storyTitle : null,
+        storyContent: validatedData.hasStory ? validatedData.storyContent : null,
+        storyImages: validatedData.hasStory ? (validatedData.storyImages || []) : [],
         updatedAt: new Date(),
       },
       include: { category: true }

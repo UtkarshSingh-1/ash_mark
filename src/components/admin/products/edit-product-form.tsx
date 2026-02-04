@@ -40,6 +40,9 @@ interface Product {
   featured: boolean
   trending: boolean
   slug: string
+  storyTitle?: string | null
+  storyContent?: string | null
+  storyImages?: string[]
   category: {
     id: string
     name: string
@@ -62,6 +65,10 @@ interface ProductFormData {
   stock: number
   featured: boolean
   trending: boolean
+  hasStory: boolean
+  storyTitle: string
+  storyContent: string
+  storyImages: string[]
 }
 
 export function EditProductForm({ product }: EditProductFormProps) {
@@ -88,6 +95,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
     stock: product.stock,
     featured: product.featured,
     trending: product.trending,
+    hasStory: Boolean((product.storyTitle || "").trim() || (product.storyContent || "").trim() || (product.storyImages || []).length > 0),
+    storyTitle: product.storyTitle || "",
+    storyContent: product.storyContent || "",
+    storyImages: product.storyImages || [],
   })
 
   // Track changes
@@ -103,6 +114,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
     stock: product.stock,
     featured: product.featured,
     trending: product.trending,
+    hasStory: Boolean((product.storyTitle || "").trim() || (product.storyContent || "").trim() || (product.storyImages || []).length > 0),
+    storyTitle: product.storyTitle || "",
+    storyContent: product.storyContent || "",
+    storyImages: product.storyImages || [],
   }), [product])
 
   useEffect(() => {
@@ -246,6 +261,62 @@ export function EditProductForm({ product }: EditProductFormProps) {
     }))
   }
 
+  const handleStoryImageUpload = async (files: FileList) => {
+    if (files.length === 0) return
+
+    setUploading(true)
+    const uploadPromises = Array.from(files).map(async (file) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'products')
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          return data.url
+        } else {
+          throw new Error('Upload failed')
+        }
+      } catch (error) {
+        console.error('Error uploading story image:', error)
+        toast({
+          title: "Upload Error",
+          description: `Failed to upload ${file.name}`,
+          variant: "destructive",
+        })
+        return null
+      }
+    })
+
+    try {
+      const uploadedUrls = await Promise.all(uploadPromises)
+      const validUrls = uploadedUrls.filter(url => url !== null)
+      
+      setFormData(prev => ({
+        ...prev,
+        storyImages: [...prev.storyImages, ...validUrls]
+      }))
+
+      toast({
+        title: "Success",
+        description: `${validUrls.length} story image(s) uploaded successfully`,
+      })
+    } catch {
+      toast({
+        title: "Error",
+        description: "Some story images failed to upload",
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
 
   const generateSlug = (name: string) => {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -281,6 +352,15 @@ export function EditProductForm({ product }: EditProductFormProps) {
       return
     }
 
+    if (formData.hasStory && (!formData.storyTitle.trim() || !formData.storyContent.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Story title and content are required when story is enabled",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -306,14 +386,36 @@ export function EditProductForm({ product }: EditProductFormProps) {
         setHasChanges(false)
         router.push(`/admin/products/${product.id}`)
       } else {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update product')
+        const errorText = await response.text()
+        console.error(
+          'Update product failed:',
+          `status=${response.status}`,
+          `statusText=${response.statusText}`,
+          `contentType=${response.headers.get('content-type')}`,
+          `body=${errorText}`
+        )
+        let message = 'Failed to update product'
+
+        if (errorText) {
+          try {
+            const error = JSON.parse(errorText)
+            if (Array.isArray(error.details) && error.details[0]?.message) {
+              message = error.details[0].message
+            } else {
+              message = error.error || error.message || message
+            }
+          } catch {
+            message = errorText
+          }
+        }
+
+        throw new Error(message)
       }
     } catch (error) {
       console.error('Error updating product:', error)
       toast({
         title: "Error",
-        description: "Failed to update product",
+        description: error instanceof Error ? error.message : "Failed to update product",
         variant: "destructive",
       })
     } finally {
@@ -338,6 +440,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
         stock: product.stock,
         featured: product.featured,
         trending: product.trending,
+        hasStory: Boolean((product.storyTitle || "").trim() || (product.storyContent || "").trim() || (product.storyImages || []).length > 0),
+        storyTitle: product.storyTitle || "",
+        storyContent: product.storyContent || "",
+        storyImages: product.storyImages || [],
       })
       setNewSize("")
       setNewColor("")
@@ -716,6 +822,107 @@ export function EditProductForm({ product }: EditProductFormProps) {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Product Story */}
+        <Card className="border-0 shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Product Story
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="hasStory">Include Product Story</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add a compelling story behind this product
+                </p>
+              </div>
+              <Switch
+                id="hasStory"
+                checked={formData.hasStory}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasStory: checked }))}
+              />
+            </div>
+
+            {formData.hasStory && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label htmlFor="storyTitle">Story Title *</Label>
+                  <Input
+                    id="storyTitle"
+                    value={formData.storyTitle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, storyTitle: e.target.value }))}
+                    placeholder="Enter the story title..."
+                    className="border-0"
+                    required={formData.hasStory}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="storyContent">Story Content *</Label>
+                  <Textarea
+                    id="storyContent"
+                    value={formData.storyContent}
+                    onChange={(e) => setFormData(prev => ({ ...prev, storyContent: e.target.value }))}
+                    placeholder="Tell the story behind this product..."
+                    className="border-0 min-h-[120px]"
+                    required={formData.hasStory}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Story Images</Label>
+                  <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                    {formData.storyImages.map((image, index) => (
+                      <div key={index} className="relative group aspect-square bg-muted">
+                        <Image
+                          src={image}
+                          alt={`Story image ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 border-0"
+                          onClick={() => setFormData(prev => ({ 
+                            ...prev, 
+                            storyImages: prev.storyImages.filter((_, i) => i !== index) 
+                          }))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <div
+                      className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center"
+                      onClick={() => {
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.multiple = true
+                        input.accept = 'image/*'
+                        input.onchange = (e) => {
+                          const files = (e.target as HTMLInputElement).files
+                          if (files) handleStoryImageUpload(files)
+                        }
+                        input.click()
+                      }}
+                    >
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {uploading ? "Uploading..." : "Add Story Images"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
