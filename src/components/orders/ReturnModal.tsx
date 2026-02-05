@@ -25,7 +25,8 @@ export function ReturnModal({ open, onCloseAction, item }: ReturnModalProps) {
 
     const res = await fetch(`/api/orders/${item.orderId}/return`, {
       method: "POST",
-      body: JSON.stringify({ reason }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason, itemId: item.id }),
     });
 
     if (res.ok) {

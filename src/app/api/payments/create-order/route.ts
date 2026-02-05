@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       0
     )
 
-    const shipping = subtotal > 1000 ? 0 : 100
+    const shipping = 0
 
     let discount = 0
     let appliedPromoCode: string | null = null

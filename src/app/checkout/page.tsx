@@ -65,7 +65,7 @@ export default function CheckoutPage() {
     [cartItems]
   )
 
-  const shipping = subtotal > 1000 ? 0 : 100
+  const shipping = 0
   const total = Math.max(subtotal + shipping - discount, 0)
 
   /* -------------------- DATA -------------------- */

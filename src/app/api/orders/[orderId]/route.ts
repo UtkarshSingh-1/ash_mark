@@ -15,7 +15,7 @@ export async function POST(
     const { orderId } = await params;
     const { itemId, reason } = await request.json();
 
-    if (!reason || !itemId) {
+    if (!reason) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -29,6 +29,22 @@ export async function POST(
 
     if (!order) {
       return NextResponse.json({ error: "Order not eligible for return" }, { status: 400 });
+    }
+
+    if (order.returnEligibleTill && order.returnEligibleTill < new Date()) {
+      return NextResponse.json({ error: "Return window expired" }, { status: 400 });
+    }
+
+    const existing = await prisma.returnRequest.findFirst({
+      where: {
+        orderId,
+        userId: session.user.id,
+        status: { in: ["REQUESTED", "APPROVED", "PICKUP_SCHEDULED", "PICKUP_COMPLETED", "REFUND_INITIATED"] },
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json({ error: "Return already requested" }, { status: 400 });
     }
 
     await prisma.returnRequest.create({

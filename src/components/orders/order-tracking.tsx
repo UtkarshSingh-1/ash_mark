@@ -1,13 +1,32 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Truck, Package, MapPin, XCircle } from "lucide-react";
-import { format } from "date-fns";
+import { CheckCircle, Truck, Package, MapPin } from "lucide-react";
 
 interface OrderTrackingProps {
   order: any;
 }
 
 export function OrderTracking({ order }: OrderTrackingProps) {
+  const returnSteps = [
+    "REQUESTED",
+    "APPROVED",
+    "PICKUP_SCHEDULED",
+    "PICKUP_COMPLETED",
+    "REFUND_INITIATED",
+    "REFUND_COMPLETED",
+    "REJECTED",
+  ]
+
+  const exchangeSteps = [
+    "REQUESTED",
+    "APPROVED",
+    "PICKUP_SCHEDULED",
+    "PICKUP_COMPLETED",
+    "EXCHANGE_PROCESSING",
+    "EXCHANGE_COMPLETED",
+    "REJECTED",
+  ]
+
   const steps = [
     {
       key: "CONFIRMED",
@@ -72,27 +91,89 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 
         {order.returnStatus === "REQUESTED" && (
           <div className="p-3 bg-yellow-50 border text-sm rounded">
-            Return Requested — Pickup within <b>5–7 working days</b>
+            Return Requested - Pickup within <b>5-7 working days</b>
+          </div>
+        )}
+
+        {order.returnStatus === "PICKUP_SCHEDULED" && (
+          <div className="p-3 bg-yellow-50 border text-sm rounded">
+            Return Pickup Scheduled
+          </div>
+        )}
+
+        {order.returnStatus === "PICKUP_COMPLETED" && (
+          <div className="p-3 bg-yellow-50 border text-sm rounded">
+            Return Pickup Completed
           </div>
         )}
 
         {order.exchangeStatus === "REQUESTED" && (
           <div className="p-3 bg-yellow-50 border text-sm rounded">
-            Exchange Requested — Pickup within <b>5–7 working days</b>
+            Exchange Requested - Pickup within <b>5-7 working days</b>
+          </div>
+        )}
+
+        {order.exchangeStatus === "PICKUP_SCHEDULED" && (
+          <div className="p-3 bg-yellow-50 border text-sm rounded">
+            Exchange Pickup Scheduled
+          </div>
+        )}
+
+        {order.exchangeStatus === "PICKUP_COMPLETED" && (
+          <div className="p-3 bg-yellow-50 border text-sm rounded">
+            Exchange Pickup Completed
           </div>
         )}
 
         {order.refundStatus === "COMPLETED" && (
           <div className="p-3 bg-green-50 border text-sm rounded">
-            Refund Completed — Amount: ₹{order.refundAmount}
+            Refund Completed - Amount: INR {order.refundAmount}
           </div>
         )}
 
         {order.refundStatus === "INITIATED" && (
           <div className="p-3 bg-yellow-50 border text-sm rounded">
-            Refund Initiated — Please wait 3–5 working days
+            Refund Initiated - Please wait 3-5 working days
           </div>
         )}
+
+        {(order.returnStatus && order.returnStatus !== "NONE") ||
+        (order.exchangeStatus && order.exchangeStatus !== "NONE") ? (
+          <div className="p-3 bg-muted/30 border text-sm rounded space-y-1">
+            {order.returnStatus && order.returnStatus !== "NONE" && (
+              <div className="space-y-2">
+                <div><strong>Return Status:</strong> {order.returnStatus}</div>
+                <div className="flex gap-2 flex-wrap">
+                  {returnSteps.map((s) => (
+                    <Badge
+                      key={`return-${s}`}
+                      variant={s === order.returnStatus ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {s.replaceAll("_", " ")}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {order.exchangeStatus && order.exchangeStatus !== "NONE" && (
+              <div className="space-y-2">
+                <div><strong>Exchange Status:</strong> {order.exchangeStatus}</div>
+                <div className="flex gap-2 flex-wrap">
+                  {exchangeSteps.map((s) => (
+                    <Badge
+                      key={`exchange-${s}`}
+                      variant={s === order.exchangeStatus ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {s.replaceAll("_", " ")}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

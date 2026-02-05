@@ -10,6 +10,9 @@ interface AdminOrderDetailsProps {
     id: string
     status: string
     paymentStatus: string
+    refundMethod?: string | null
+    refundStatus?: string | null
+    refundAmount?: number | null
     total: number
     subtotal: number
     tax: number
@@ -78,7 +81,7 @@ export function AdminOrderDetails({ order }: AdminOrderDetailsProps) {
       case "CONFIRMED": return "bg-blue-600"
       case "PENDING": return "bg-gray-600"
       case "CANCELLED": return "bg-red-600"
-      case "RETURNED": return "bg-orange-600"
+      case "COMPLETED": return "bg-orange-600"
       default: return "bg-gray-600"
     }
   }
@@ -244,6 +247,20 @@ export function AdminOrderDetails({ order }: AdminOrderDetailsProps) {
             <div><strong>Email:</strong> {order.user.email}</div>
             {order.razorpayPaymentId && (
               <div><strong>Payment ID:</strong> {order.razorpayPaymentId}</div>
+            )}
+            {order.refundMethod && (
+              <div><strong>Refund Method:</strong> {order.refundMethod}</div>
+            )}
+            {order.refundStatus && (
+              <div><strong>Refund Status:</strong> {order.refundStatus}</div>
+            )}
+            {order.refundAmount != null && (
+              <div>
+                <strong>
+                  {order.refundMethod === "WALLET" ? "Wallet Credit" : "Refund Amount"}:
+                </strong>{" "}
+                {formatPrice(order.refundAmount)}
+              </div>
             )}
           </CardContent>
         </Card>

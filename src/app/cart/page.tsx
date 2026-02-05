@@ -51,7 +51,7 @@ export default function CartPage() {
     (sum, item) => sum + Number(item.product.price) * item.quantity,
     0
   )
-  const shipping = subtotal > 1000 ? 0 : 100
+  const shipping = 0
   const total = subtotal + shipping
 
   if (loading) {
@@ -143,11 +143,7 @@ export default function CartPage() {
                     {session ? 'Proceed to Checkout' : 'Login to Checkout'}
                   </Button>
 
-                  {subtotal < 1000 && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Add {formatPrice(1000 - subtotal)} more for free shipping
-                    </p>
-                  )}
+                  
                 </CardContent>
               </Card>
             </div>

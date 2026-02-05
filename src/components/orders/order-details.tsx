@@ -13,8 +13,7 @@ type OrderStatus =
   | "SHIPPED"
   | "DELIVERED"
   | "CANCELLED"
-  | "RETURNED"
-  | "RETURN_REQUESTED";
+  | "COMPLETED";
 
 type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
 
@@ -83,12 +82,11 @@ export function OrderDetails({ order }: OrderDetailsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "DELIVERED": return "bg-green-600";
+      case "COMPLETED": return "bg-orange-600";
       case "SHIPPED": return "bg-purple-600";
       case "PROCESSING": return "bg-yellow-600";
       case "CONFIRMED": return "bg-blue-600";
       case "CANCELLED": return "bg-red-600";
-      case "RETURN_REQUESTED": return "bg-orange-600";
-      case "RETURNED": return "bg-orange-700";
       default: return "bg-gray-600";
     }
   };

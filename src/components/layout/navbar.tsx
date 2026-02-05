@@ -50,7 +50,6 @@ export function Navbar() {
             height={32}
             className="object-contain"
           />
-          <div className="text-2xl font-bold text-crimson-600">ASHMARK</div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -154,7 +153,6 @@ export function Navbar() {
                     height={24}
                     className="object-contain"
                   />
-                  <div className="text-lg font-bold text-crimson-600">ASHMARK</div>
                 </div>
 
                 <div className="flex flex-col space-y-6 flex-1">

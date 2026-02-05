@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card"
-import { ShoppingBag, Package, Truck, CheckCircle } from "lucide-react"
+import { ShoppingBag, Package, Truck, CheckCircle, RotateCcw, Repeat2, XCircle } from "lucide-react"
 import { prisma } from "@/lib/db"
 import { auth } from "@/lib/auth"
+import Link from "next/link"
 
 export async function OrdersHeader() {
   const session = await auth()
@@ -93,6 +94,43 @@ export async function OrdersHeader() {
             </Card>
           )
         })}
+      </div>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+          <Link href="/account/returns" className="block">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Returns</p>
+                <p className="text-lg font-semibold">View Requests</p>
+              </div>
+              <RotateCcw className="h-7 w-7 text-orange-600" />
+            </CardContent>
+          </Link>
+        </Card>
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+          <Link href="/account/exchanges" className="block">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Exchanges</p>
+                <p className="text-lg font-semibold">View Requests</p>
+              </div>
+              <Repeat2 className="h-7 w-7 text-blue-600" />
+            </CardContent>
+          </Link>
+        </Card>
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+          <Link href="/account/cancelled" className="block">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Cancelled</p>
+                <p className="text-lg font-semibold">View Orders</p>
+              </div>
+              <XCircle className="h-7 w-7 text-red-600" />
+            </CardContent>
+          </Link>
+        </Card>
       </div>
     </div>
   )

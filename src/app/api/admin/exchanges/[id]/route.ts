@@ -13,6 +13,21 @@ export async function PATCH(
 
   const { id } = await params
   const { status, adminNote } = await req.json()
+  console.info("[exchanges] admin update", { id, status })
+
+  const allowed = [
+    "REQUESTED",
+    "APPROVED",
+    "PICKUP_SCHEDULED",
+    "PICKUP_COMPLETED",
+    "EXCHANGE_PROCESSING",
+    "EXCHANGE_COMPLETED",
+    "REJECTED",
+  ]
+
+  if (!allowed.includes(status)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 })
+  }
 
   const updated = await prisma.exchangeRequest.update({
     where: { id },
@@ -20,6 +35,11 @@ export async function PATCH(
       status,
       adminNote,
     },
+  })
+
+  await prisma.order.update({
+    where: { id: updated.orderId },
+    data: { exchangeStatus: status },
   })
 
   return NextResponse.json(updated)

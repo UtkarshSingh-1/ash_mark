@@ -8,7 +8,7 @@ import { DashboardStats } from "@/components/admin/dashboard-stats"
 import { RecentOrders } from "@/components/admin/recent-orders"
 import { AddProductSection } from "@/components/admin/add-product-section"
 
-import { Tag, RefreshCcw, Repeat } from "lucide-react"
+import { Tag, RefreshCcw, Repeat, XCircle } from "lucide-react"
 
 export default async function AdminDashboard() {
   const session = await auth()
@@ -27,6 +27,7 @@ export default async function AdminDashboard() {
     activePromos,
     pendingReturns,
     pendingExchanges,
+    cancelledOrders,
   ] = await Promise.all([
     prisma.order.count(),
     prisma.product.count(),
@@ -39,6 +40,7 @@ export default async function AdminDashboard() {
     prisma.promoCode.count({ where: { isActive: true } }),
     prisma.returnRequest.count({ where: { status: "REQUESTED" } }),
     prisma.exchangeRequest.count({ where: { status: "REQUESTED" } }),
+    prisma.order.count({ where: { status: "CANCELLED" } }),
   ])
 
   return (
@@ -99,6 +101,17 @@ export default async function AdminDashboard() {
               cta="View Exchanges"
               highlight={pendingExchanges > 0}
             />
+
+            {/* Cancelled Orders */}
+            <ManagementCard
+              title="Cancelled Orders"
+              description="See all cancelled orders"
+              count={cancelledOrders}
+              icon={<XCircle className="h-5 w-5 text-red-600" />}
+              href="/admin/orders?status=CANCELLED"
+              cta="View Cancelled"
+              countLabel="total"
+            />
           </div>
         </div>
       </main>
@@ -116,6 +129,7 @@ function ManagementCard({
   href,
   cta,
   highlight = false,
+  countLabel = "pending",
 }: {
   title: string
   description: string
@@ -124,6 +138,7 @@ function ManagementCard({
   href: string
   cta: string
   highlight?: boolean
+  countLabel?: string
 }) {
   return (
     <div
@@ -144,7 +159,7 @@ function ManagementCard({
         <p className="text-3xl font-bold">
           {count}
           <span className="text-sm font-normal text-muted-foreground ml-2">
-            pending
+            {countLabel}
           </span>
         </p>
       </div>

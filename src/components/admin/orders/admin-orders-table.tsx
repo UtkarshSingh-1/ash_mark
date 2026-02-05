@@ -162,7 +162,7 @@ export function AdminOrdersTable({ searchParams }: AdminOrdersTableProps) {
     if (status === 'PROCESSING') return 'bg-yellow-600'
     if (status === 'CONFIRMED') return 'bg-blue-600'
     if (status === 'CANCELLED') return 'bg-red-600'
-    if (status === 'RETURNED') return 'bg-orange-600'
+    if (status === 'COMPLETED') return 'bg-orange-600'
     return 'bg-gray-600'
   }
 
@@ -278,7 +278,7 @@ export function AdminOrdersTable({ searchParams }: AdminOrdersTableProps) {
               <SelectItem value="SHIPPED">Shipped</SelectItem>
               <SelectItem value="DELIVERED">Delivered</SelectItem>
               <SelectItem value="CANCELLED">Cancelled</SelectItem>
-              <SelectItem value="RETURNED">Returned</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
             </SelectContent>
           </Select>
 

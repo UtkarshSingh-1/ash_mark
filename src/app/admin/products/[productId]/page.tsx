@@ -196,7 +196,7 @@ function AdminProductOrders({ product }: { product: any }) {
       case 'SHIPPED': return 'bg-purple-600'
       case 'DELIVERED': return 'bg-green-600'
       case 'CANCELLED': return 'bg-red-600'
-      case 'RETURNED': return 'bg-orange-600'
+      case 'COMPLETED': return 'bg-orange-600'
       default: return 'bg-gray-600'
     }
   }

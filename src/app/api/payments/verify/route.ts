@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import Razorpay from 'razorpay'
-import { validatePromoCode, isNewUser } from '@/lib/promo-codes'
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,169 +10,93 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const {
-      amount,
-      addressId,
-      idempotencyKey,
-      promoCode,
-      paymentMethod,
-    } = await request.json()
+    const body = await request.json()
+    const razorpay_order_id =
+      body.razorpay_order_id || body.razorpayOrderId
+    const razorpay_payment_id =
+      body.razorpay_payment_id || body.razorpayPaymentId
+    const razorpay_signature =
+      body.razorpay_signature || body.razorpaySignature
+    const orderId = body.orderId
 
-    const cartItems = await prisma.cartItem.findMany({
-      where: { userId: session.user.id },
-      include: { product: true },
-    })
-
-    if (cartItems.length === 0) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderId) {
       return NextResponse.json(
-        { error: 'Your cart is empty. Please add items again.' },
+        { error: 'Missing payment verification details' },
         { status: 400 }
       )
     }
 
-    const subtotal = cartItems.reduce(
-      (sum, item) => sum + Number(item.product.price) * item.quantity,
-      0
-    )
+    const order = await prisma.order.findUnique({ where: { id: orderId } })
+    if (!order || order.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
 
-    const shipping = subtotal > 1000 ? 0 : 100
+    if (order.razorpayOrderId && order.razorpayOrderId !== razorpay_order_id) {
+      return NextResponse.json(
+        { error: 'Order mismatch' },
+        { status: 400 }
+      )
+    }
 
-    let discount = 0
-    let appliedPromoCode: string | null = null
+    if (order.paymentStatus === 'PAID') {
+      return NextResponse.json({ success: true, alreadyVerified: true })
+    }
 
-    if (promoCode) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { createdAt: true },
+    const secret = process.env.RAZORPAY_KEY_SECRET
+    if (!secret) {
+      return NextResponse.json(
+        { error: 'Payment verification not configured' },
+        { status: 500 }
+      )
+    }
+
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest('hex')
+
+    if (expectedSignature !== razorpay_signature) {
+      return NextResponse.json(
+        { error: 'Invalid payment signature' },
+        { status: 400 }
+      )
+    }
+
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        paymentMethod: 'ONLINE',
+        paymentStatus: 'PAID',
+        status: order.status === 'PENDING' ? 'CONFIRMED' : order.status,
+        updatedAt: new Date(),
+      },
+    })
+
+    if (order.promoCode) {
+      const existingUsage = await prisma.promoCodeUsage.findUnique({
+        where: { orderId },
       })
 
-      if (user) {
-        const userIsNew = isNewUser(user.createdAt)
-
-        const existingUsage = await prisma.promoCodeUsage.findUnique({
-          where: {
-            userId_code: {
-              userId: session.user.id,
-              code: promoCode.toUpperCase().trim(),
-            },
+      if (!existingUsage) {
+        await prisma.promoCodeUsage.create({
+          data: {
+            code: order.promoCode,
+            userId: order.userId,
+            orderId: order.id,
           },
         })
-
-        if (existingUsage) {
-          return NextResponse.json(
-            { error: 'This promo code has already been used' },
-            { status: 400 }
-          )
-        }
-
-        const validation = validatePromoCode(promoCode, subtotal, userIsNew)
-        if (!validation.valid) {
-          return NextResponse.json(
-            { error: validation.error || 'Invalid promo code' },
-            { status: 400 }
-          )
-        }
-
-        discount = validation.discount || 0
-        appliedPromoCode = promoCode.toUpperCase().trim()
       }
     }
 
-    const finalAmount = subtotal + shipping - discount
-    const normalizedPaymentMethod = paymentMethod === 'COD' ? 'COD' : 'ONLINE'
-
-    const orderItemsPayload = cartItems.map((ci) => ({
-      productId: ci.productId,
-      quantity: ci.quantity,
-      price: Number(ci.product.price),
-      size: ci.size || undefined,
-      color: ci.color || undefined,
-    }))
-
-    // ---------- COD ORDER ----------
-    if (normalizedPaymentMethod === 'COD') {
-      const order = await prisma.order.create({
-        data: {
-          userId: session.user.id,
-          total: finalAmount,
-          subtotal,
-          tax: 0,
-          shipping,
-          discount: discount > 0 ? discount : null,
-          promoCode: appliedPromoCode,
-          paymentMethod: 'COD',
-          paymentStatus: 'PENDING',
-          status: 'CONFIRMED',
-          addressId,
-          shippingAddressId: addressId,
-          items: { create: orderItemsPayload },
-        },
-      })
-
-      await prisma.cartItem.deleteMany({ where: { userId: session.user.id } })
-
-      return NextResponse.json({
-        success: true,
-        orderId: order.id,
-      })
-    }
-
-    // ---------- ONLINE PAYMENT ----------
-    const razorpayOrder = await razorpay.orders.create({
-      amount: Math.round(finalAmount * 100),
-      currency: 'INR',
-      receipt: `order_${Date.now()}`,
+    await prisma.cartItem.deleteMany({
+      where: { userId: session.user.id },
     })
 
-    let order
-
-    if (idempotencyKey) {
-      order = await prisma.order.update({
-        where: { id: idempotencyKey },
-        data: {
-          total: finalAmount,
-          subtotal,
-          tax: 0,
-          shipping,
-          discount: discount > 0 ? discount : null,
-          promoCode: appliedPromoCode,
-          razorpayOrderId: razorpayOrder.id,
-          addressId,
-          shippingAddressId: addressId,
-          paymentMethod: 'ONLINE',
-          paymentStatus: 'PENDING',
-        },
-      })
-    } else {
-      order = await prisma.order.create({
-        data: {
-          userId: session.user.id,
-          total: finalAmount,
-          subtotal,
-          tax: 0,
-          shipping,
-          discount: discount > 0 ? discount : null,
-          promoCode: appliedPromoCode,
-          razorpayOrderId: razorpayOrder.id,
-          addressId,
-          shippingAddressId: addressId,
-          paymentMethod: 'ONLINE',
-          paymentStatus: 'PENDING',
-          status: 'PENDING',
-          items: { create: orderItemsPayload },
-        },
-      })
-    }
-
-    return NextResponse.json({
-      success: true,
-      orderId: order.id,
-      razorpayOrderId: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-    })
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error creating order:', error)
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
+    console.error('Payment verification error:', error)
+    return NextResponse.json({ error: 'Failed to verify payment' }, { status: 500 })
   }
 }

@@ -7,10 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
-import {
-  Edit, Truck, PackageCheck, CheckCircle2, RotateCcw, RefreshCcw,
-  XCircle, BadgeCheck
-} from "lucide-react"
+import { Edit, Truck, PackageCheck, RotateCcw, RefreshCcw } from "lucide-react"
 
 interface AdminOrderActionsProps {
   order: {
@@ -19,6 +16,9 @@ interface AdminOrderActionsProps {
     returnStatus?: string
     exchangeStatus?: string
     paymentStatus: string
+    total?: number
+    refundStatus?: string | null
+    refundAmount?: number | null
   }
 }
 
@@ -28,7 +28,7 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
   const [courierName, setCourierName] = useState("")
   const [trackingId, setTrackingId] = useState("")
 
-  const updateStatus = async (status: string, data: Record<string, any> = {}) => {
+  const updateOrderStatus = async (status: string, data: Record<string, any> = {}) => {
     setLoading(true)
     try {
       const response = await fetch(`/api/admin/orders/${order.id}/status`, {
@@ -48,39 +48,111 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
     }
   }
 
+  const updateReturnStatus = async (status: string) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/return-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) throw new Error()
+
+      toast({ title: "Success", description: `Return status changed to ${status}` })
+      window.location.reload()
+    } catch {
+      toast({ title: "Error", description: "Unable to update return status", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateExchangeStatus = async (status: string) => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/exchange-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) throw new Error()
+
+      toast({ title: "Success", description: `Exchange status changed to ${status}` })
+      window.location.reload()
+    } catch {
+      toast({ title: "Error", description: "Unable to update exchange status", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   /** Normal Shipment */
   const shipOrder = async () => {
     if (!courierName || !trackingId) {
       toast({ title: "Missing Info", description: "Courier + Tracking Required", variant: "destructive" })
       return
     }
-    await updateStatus("SHIPPED", { courierName, trackingId })
+    await updateOrderStatus("SHIPPED", { courierName, trackingId })
   }
 
   /**
    * RETURN ACTIONS
    */
   const returnActions = () => {
-    if (order.returnStatus === "RETURN_REQUESTED") {
+    if (order.returnStatus === "REQUESTED") {
       return (
         <div className="space-y-2">
           <Button className="w-full bg-green-600" disabled={loading}
-            onClick={() => updateStatus("RETURN_APPROVED")}>
+            onClick={() => updateReturnStatus("APPROVED")}>
             Approve Return
           </Button>
           <Button className="w-full bg-red-600" disabled={loading}
-            onClick={() => updateStatus("RETURN_REJECTED")}>
+            onClick={() => updateReturnStatus("REJECTED")}>
             Reject Return
           </Button>
         </div>
       )
     }
 
-    if (order.returnStatus === "RETURN_APPROVED") {
+    if (order.returnStatus === "APPROVED") {
+      return (
+        <div className="space-y-2">
+          <Button className="w-full bg-blue-600" disabled={loading}
+            onClick={() => updateReturnStatus("PICKUP_SCHEDULED")}>
+            Mark Pickup Scheduled
+          </Button>
+          <Button className="w-full bg-orange-600" disabled={loading}
+            onClick={() => updateReturnStatus("PICKUP_COMPLETED")}>
+            Mark Pickup Completed
+          </Button>
+        </div>
+      )
+    }
+
+    if (order.returnStatus === "PICKUP_SCHEDULED") {
       return (
         <Button className="w-full bg-orange-600" disabled={loading}
-          onClick={() => updateStatus("RETURNED")}>
-          Mark as Returned
+          onClick={() => updateReturnStatus("PICKUP_COMPLETED")}>
+          Mark Pickup Completed
+        </Button>
+      )
+    }
+
+    if (order.returnStatus === "PICKUP_COMPLETED") {
+      return (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          Refund will auto-initiate for prepaid orders after pickup is marked completed.
+        </div>
+      )
+    }
+
+    if (order.returnStatus === "REFUND_INITIATED") {
+      return (
+        <Button className="w-full bg-green-600" disabled={loading}
+          onClick={() => updateReturnStatus("REFUND_COMPLETED")}>
+          Mark Refund Completed
         </Button>
       )
     }
@@ -92,26 +164,59 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
    * EXCHANGE ACTIONS
    */
   const exchangeActions = () => {
-    if (order.exchangeStatus === "EXCHANGE_REQUESTED") {
+    if (order.exchangeStatus === "REQUESTED") {
       return (
         <div className="space-y-2">
           <Button className="w-full bg-green-600" disabled={loading}
-            onClick={() => updateStatus("EXCHANGE_APPROVED")}>
+            onClick={() => updateExchangeStatus("APPROVED")}>
             Approve Exchange
           </Button>
           <Button className="w-full bg-red-600" disabled={loading}
-            onClick={() => updateStatus("EXCHANGE_REJECTED")}>
+            onClick={() => updateExchangeStatus("REJECTED")}>
             Reject Exchange
           </Button>
         </div>
       )
     }
 
-    if (order.exchangeStatus === "EXCHANGE_APPROVED") {
+    if (order.exchangeStatus === "APPROVED") {
       return (
-        <Button className="w-full bg-blue-600" disabled={loading}
-          onClick={() => updateStatus("EXCHANGED")}>
-          Mark Exchanged Item Delivered
+        <div className="space-y-2">
+          <Button className="w-full bg-blue-600" disabled={loading}
+            onClick={() => updateExchangeStatus("PICKUP_SCHEDULED")}>
+            Mark Pickup Scheduled
+          </Button>
+          <Button className="w-full bg-indigo-600" disabled={loading}
+            onClick={() => updateExchangeStatus("PICKUP_COMPLETED")}>
+            Mark Pickup Completed
+          </Button>
+        </div>
+      )
+    }
+
+    if (order.exchangeStatus === "PICKUP_SCHEDULED") {
+      return (
+        <Button className="w-full bg-indigo-600" disabled={loading}
+          onClick={() => updateExchangeStatus("PICKUP_COMPLETED")}>
+          Mark Pickup Completed
+        </Button>
+      )
+    }
+
+    if (order.exchangeStatus === "PICKUP_COMPLETED") {
+      return (
+        <Button className="w-full bg-blue-700" disabled={loading}
+          onClick={() => updateExchangeStatus("EXCHANGE_PROCESSING")}>
+          Mark Exchange Processing
+        </Button>
+      )
+    }
+
+    if (order.exchangeStatus === "EXCHANGE_PROCESSING") {
+      return (
+        <Button className="w-full bg-green-700" disabled={loading}
+          onClick={() => updateExchangeStatus("EXCHANGE_COMPLETED")}>
+          Mark Exchange Completed
         </Button>
       )
     }
@@ -127,7 +232,7 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
       case "PENDING":
         return (
           <Button className="w-full" disabled={loading}
-            onClick={() => updateStatus("CONFIRMED")}>
+            onClick={() => updateOrderStatus("CONFIRMED")}>
             Confirm Order
           </Button>
         )
@@ -143,7 +248,7 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
       case "SHIPPED":
         return (
           <Button className="w-full" disabled={loading}
-            onClick={() => updateStatus("DELIVERED")}>
+            onClick={() => updateOrderStatus("DELIVERED")}>
             <PackageCheck className="w-4 h-4 mr-2" /> Mark as Delivered
           </Button>
         )
@@ -155,10 +260,8 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
     }
   }
 
-
   return (
     <div className="space-y-6">
-
       {/* ORDER STATUS SECTION */}
       <Card className="border-0 shadow-md">
         <CardHeader>
@@ -172,7 +275,6 @@ export function AdminOrderActions({ order }: AdminOrderActionsProps) {
           {normalFlowButtons()}
         </CardContent>
       </Card>
-
 
       {/* RETURN ACTIONS SECTION */}
       {order.returnStatus && order.returnStatus !== "NONE" && (

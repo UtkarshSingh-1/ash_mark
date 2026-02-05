@@ -108,6 +108,7 @@ export function OrdersList({ userId, searchParams }: OrdersListProps) {
     if (status === 'DELIVERED') return 'bg-green-600'
     if (status === 'SHIPPED') return 'bg-blue-600'
     if (status === 'PROCESSING') return 'bg-yellow-600'
+    if (status === 'COMPLETED') return 'bg-orange-600'
     return 'bg-gray-600'
   }
 
@@ -179,7 +180,7 @@ export function OrdersList({ userId, searchParams }: OrdersListProps) {
                 <SelectItem value="SHIPPED">Shipped</SelectItem>
                 <SelectItem value="DELIVERED">Delivered</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                <SelectItem value="RETURNED">Returned</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>

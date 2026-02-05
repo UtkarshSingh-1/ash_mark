@@ -19,6 +19,7 @@ export async function POST(
 
   const { orderId } = await params
   const { amount } = await req.json()
+  console.info("[refund] admin refund request", { orderId, amount })
 
   const order = await prisma.order.findUnique({ where: { id: orderId } })
 
@@ -34,8 +35,17 @@ export async function POST(
     where: { id: orderId },
     data: {
       paymentStatus: "REFUNDED",
+      refundMethod: "ORIGINAL_SOURCE",
+      refundStatus: "INITIATED",
+      refundAmount: amount,
+      returnStatus: "REFUND_INITIATED",
       updatedAt: new Date()
     }
+  })
+
+  await prisma.returnRequest.updateMany({
+    where: { orderId, status: { not: "REJECTED" } },
+    data: { status: "REFUND_INITIATED" },
   })
 
   return NextResponse.json({ success: true, refund })

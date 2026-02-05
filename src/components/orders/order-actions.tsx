@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Download, RefreshCcw, RotateCcw } from "lucide-react"
 import { ReturnModal } from "./ReturnModal"
 import { ExchangeModal } from "./ExchangeModal"
+import { toast } from "@/components/ui/use-toast"
 
 export function OrderActions({ order }: { order: any }) {
   const [returnOpen, setReturnOpen] = useState(false)
@@ -14,6 +15,9 @@ export function OrderActions({ order }: { order: any }) {
   const [selectedItem, setSelectedItem] = useState<any>(null)
 
   const eligible = order.status === "DELIVERED"
+  const returnBlocked = order.returnStatus && order.returnStatus !== "NONE"
+  const exchangeBlocked = order.exchangeStatus && order.exchangeStatus !== "NONE"
+  const canCancel = ["PENDING", "CONFIRMED", "PROCESSING"].includes(order.status)
 
   const openReturn = (item: any) => {
     setSelectedItem(item)
@@ -23,6 +27,20 @@ export function OrderActions({ order }: { order: any }) {
   const openExchange = (item: any) => {
     setSelectedItem(item)
     setExchangeOpen(true)
+  }
+
+  const cancelOrder = async () => {
+    if (!confirm("Cancel this order?")) return
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, {
+        method: "POST",
+      })
+      if (!res.ok) throw new Error()
+      toast({ title: "Order cancelled" })
+      window.location.reload()
+    } catch {
+      toast({ title: "Cancel failed", variant: "destructive" })
+    }
   }
 
   return (
@@ -39,6 +57,16 @@ export function OrderActions({ order }: { order: any }) {
 
           <Separator className="my-4" />
 
+          {canCancel && (
+            <Button
+              className="w-full mb-4"
+              variant="destructive"
+              onClick={cancelOrder}
+            >
+              Cancel Order
+            </Button>
+          )}
+
           {eligible &&
             order.items.map((item: any) => (
               <div key={item.id} className="flex gap-2 mb-2">
@@ -46,6 +74,7 @@ export function OrderActions({ order }: { order: any }) {
                   variant="outline"
                   className="flex-1"
                   onClick={() => openReturn(item)}
+                  disabled={returnBlocked}
                 >
                   <RotateCcw className="w-4 h-4 mr-2" /> Return
                 </Button>
@@ -54,6 +83,7 @@ export function OrderActions({ order }: { order: any }) {
                   variant="outline"
                   className="flex-1"
                   onClick={() => openExchange(item)}
+                  disabled={exchangeBlocked}
                 >
                   <RefreshCcw className="w-4 h-4 mr-2" /> Exchange
                 </Button>

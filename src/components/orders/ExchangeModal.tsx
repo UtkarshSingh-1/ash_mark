@@ -30,6 +30,7 @@ export function ExchangeModal({ open, onCloseAction, item }: ExchangeModalProps)
 
     const res = await fetch(`/api/orders/${item.orderId}/exchange`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         itemId: item.id,
         reason,

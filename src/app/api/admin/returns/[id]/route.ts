@@ -16,6 +16,7 @@ export async function PATCH(
   const { id } = await params
   const body = await req.json()
   const { status } = body as { status: "APPROVED" | "REJECTED" }
+  console.info("[returns] admin approve/reject", { id, status })
 
   if (!["APPROVED", "REJECTED"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 })
@@ -35,6 +36,11 @@ export async function PATCH(
       },
       user: true,
     },
+  })
+
+  await prisma.order.update({
+    where: { id: updatedReturn.orderId },
+    data: { returnStatus: status },
   })
 
   return NextResponse.json({ success: true, return: updatedReturn })

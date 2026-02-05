@@ -32,18 +32,21 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
       description: "Order has been placed by customer",
       timestamp: order.createdAt,
       icon: Package,
+      scope: "order",
     },
     {
       status: "CONFIRMED",
       title: "Order Confirmed",
       description: "Order has been confirmed",
       icon: CheckCircle,
+      scope: "order",
     },
     {
       status: "PROCESSING",
       title: "Processing",
       description: "Order is being prepared",
       icon: Package,
+      scope: "order",
     },
     {
       status: "SHIPPED",
@@ -51,6 +54,7 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
       description: "Order left warehouse",
       timestamp: order.shippedAt || null,
       icon: Truck,
+      scope: "order",
     },
     {
       status: "DELIVERED",
@@ -58,59 +62,108 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
       description: "Order delivered to customer",
       timestamp: order.deliveredAt || null,
       icon: MapPin,
+      scope: "order",
     },
   ]
 
   const returnTimeline = [
     {
-      status: "RETURN_REQUESTED",
+      status: "REQUESTED",
       title: "Return Requested",
       description: "Customer requested a return",
       icon: RotateCcw,
+      scope: "return",
     },
     {
-      status: "RETURN_APPROVED",
+      status: "APPROVED",
       title: "Return Approved",
       description: "Return request has been approved",
       icon: CheckCircle,
+      scope: "return",
     },
     {
-      status: "RETURNED",
-      title: "Returned",
-      description: "Item returned successfully",
+      status: "PICKUP_SCHEDULED",
+      title: "Pickup Scheduled",
+      description: "Pickup scheduled for return",
       icon: RotateCcw,
+      scope: "return",
+    },
+    {
+      status: "PICKUP_COMPLETED",
+      title: "Pickup Completed",
+      description: "Returned item picked up",
+      icon: RotateCcw,
+      scope: "return",
+    },
+    {
+      status: "REFUND_INITIATED",
+      title: "Refund Initiated",
+      description: "Refund initiated to customer",
+      icon: CheckCircle,
+      scope: "return",
+    },
+    {
+      status: "REFUND_COMPLETED",
+      title: "Refund Completed",
+      description: "Refund completed successfully",
+      icon: RotateCcw,
+      scope: "return",
     },
   ]
 
   const exchangeTimeline = [
     {
-      status: "EXCHANGE_REQUESTED",
+      status: "REQUESTED",
       title: "Exchange Requested",
       description: "Customer requested an exchange",
       icon: RefreshCcw,
+      scope: "exchange",
     },
     {
-      status: "EXCHANGE_APPROVED",
+      status: "APPROVED",
       title: "Exchange Approved",
       description: "Exchange approved and processing",
       icon: CheckCircle,
+      scope: "exchange",
     },
     {
-      status: "EXCHANGED",
-      title: "Exchanged",
-      description: "Item exchanged successfully",
+      status: "PICKUP_SCHEDULED",
+      title: "Pickup Scheduled",
+      description: "Pickup scheduled for exchange",
       icon: RefreshCcw,
+      scope: "exchange",
+    },
+    {
+      status: "PICKUP_COMPLETED",
+      title: "Pickup Completed",
+      description: "Exchange item picked up",
+      icon: RefreshCcw,
+      scope: "exchange",
+    },
+    {
+      status: "EXCHANGE_PROCESSING",
+      title: "Exchange Processing",
+      description: "Replacement item in processing",
+      icon: CheckCircle,
+      scope: "exchange",
+    },
+    {
+      status: "EXCHANGE_COMPLETED",
+      title: "Exchange Completed",
+      description: "Exchange completed successfully",
+      icon: RefreshCcw,
+      scope: "exchange",
     },
   ]
 
   let finalTimeline: any[] = [...baseTimeline]
 
   // Merge return / exchange states after DELIVERED
-  if (order.status.includes("RETURN")) {
+  if (order.returnStatus && order.returnStatus !== "NONE") {
     finalTimeline = [...finalTimeline, ...returnTimeline]
   }
 
-  if (order.status.includes("EXCHANGE")) {
+  if (order.exchangeStatus && order.exchangeStatus !== "NONE") {
     finalTimeline = [...finalTimeline, ...exchangeTimeline]
   }
 
@@ -130,18 +183,9 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
   }
 
   // Mark completed states
-  const completedStatuses = new Set([
-    "CONFIRMED",
-    "PROCESSING",
-    "SHIPPED",
-    "DELIVERED",
-    "RETURN_REQUESTED",
-    "RETURN_APPROVED",
-    "RETURNED",
-    "EXCHANGE_REQUESTED",
-    "EXCHANGE_APPROVED",
-    "EXCHANGED",
-  ])
+  const orderIndex = baseTimeline.findIndex(e => e.status === order.status)
+  const returnIndex = returnTimeline.findIndex(e => e.status === order.returnStatus)
+  const exchangeIndex = exchangeTimeline.findIndex(e => e.status === order.exchangeStatus)
 
   return (
     <Card className="border-0 shadow-md">
@@ -156,8 +200,15 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
         <div className="space-y-6">
           {finalTimeline.map((event, index) => {
             const Icon = event.icon
-            const isCurrent = event.status === order.status
-            const isCompleted = completedStatuses.has(event.status) || index < finalTimeline.findIndex(e => e.status === order.status)
+            const isCurrent =
+              (event.scope === "order" && event.status === order.status) ||
+              (event.scope === "return" && event.status === order.returnStatus) ||
+              (event.scope === "exchange" && event.status === order.exchangeStatus)
+
+            const isCompleted =
+              (event.scope === "order" && orderIndex >= 0 && baseTimeline.findIndex(e => e.status === event.status) <= orderIndex) ||
+              (event.scope === "return" && returnIndex >= 0 && returnTimeline.findIndex(e => e.status === event.status) <= returnIndex) ||
+              (event.scope === "exchange" && exchangeIndex >= 0 && exchangeTimeline.findIndex(e => e.status === event.status) <= exchangeIndex)
 
             return (
               <div key={event.status} className="flex gap-4">
@@ -210,6 +261,12 @@ export function AdminOrderTimeline({ order }: AdminOrderTimelineProps) {
           <div><strong>Order Created:</strong> {formatDate(new Date(order.createdAt))}</div>
           <div><strong>Last Updated:</strong> {formatDate(new Date(order.updatedAt))}</div>
           <div><strong>Status:</strong> {order.status}</div>
+          {order.returnStatus && order.returnStatus !== "NONE" && (
+            <div><strong>Return:</strong> {order.returnStatus}</div>
+          )}
+          {order.exchangeStatus && order.exchangeStatus !== "NONE" && (
+            <div><strong>Exchange:</strong> {order.exchangeStatus}</div>
+          )}
           <div><strong>Payment:</strong> {order.paymentStatus}</div>
         </div>
       </CardContent>

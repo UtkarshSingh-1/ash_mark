@@ -52,6 +52,7 @@ export default async function AdminOrderDetailsPage({
     tax: Number(order.tax),
     shipping: Number(order.shipping),
     discount: order.discount ? Number(order.discount) : null,
+    refundAmount: order.refundAmount ? Number(order.refundAmount) : null,
     createdAt: order.createdAt.toISOString(),
     updatedAt: order.updatedAt.toISOString(),
 
