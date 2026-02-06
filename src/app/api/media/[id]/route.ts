@@ -3,10 +3,11 @@ import { prisma } from "@/lib/db"
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   const media = await prisma.media.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     select: { data: true, mimeType: true, size: true },
   })
 
