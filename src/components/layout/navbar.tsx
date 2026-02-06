@@ -46,8 +46,8 @@ export function Navbar() {
           <Image
             src="/logo.png"
             alt="Ashmark Logo"
-            width={32}
-            height={32}
+            width={44}
+            height={44}
             className="object-contain"
           />
         </Link>
@@ -149,8 +149,8 @@ export function Navbar() {
                   <Image
                     src="/logo.png"
                     alt="Ashmark Logo"
-                    width={24}
-                    height={24}
+                    width={32}
+                    height={32}
                     className="object-contain"
                   />
                 </div>

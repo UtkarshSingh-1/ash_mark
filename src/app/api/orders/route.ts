@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
+        { id: { contains: search } },
         { 
           items: {
             some: {
               product: {
-                name: { contains: search, mode: 'insensitive' }
+                name: { contains: search }
               }
             }
           }

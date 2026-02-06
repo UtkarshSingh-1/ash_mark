@@ -14,6 +14,8 @@ interface SearchParamsShape {
   sort?: string
   minPrice?: string
   maxPrice?: string
+  featured?: string
+  trending?: string
 }
 
 export default async function ProductsPage(
@@ -28,6 +30,8 @@ export default async function ProductsPage(
     sort: pick('sort'),
     minPrice: pick('minPrice'),
     maxPrice: pick('maxPrice'),
+    featured: pick('featured'),
+    trending: pick('trending'),
   }
   return (
     <>

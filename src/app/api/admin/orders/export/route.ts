@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
     if (paymentStatus && paymentStatus !== 'all') where.paymentStatus = paymentStatus
     if (search) {
       where.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { id: { contains: search } },
+        { user: { name: { contains: search } } },
+        { user: { email: { contains: search } } },
       ]
     }
 

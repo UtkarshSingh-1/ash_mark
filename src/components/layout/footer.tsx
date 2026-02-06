@@ -80,16 +80,6 @@ export function Footer() {
                   About Us
                 </Link>
               </li>
-              <li>
-                <Link href="/contact" className="hover:text-foreground">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/size-guide" className="hover:text-foreground">
-                  Size Guide
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -97,11 +87,6 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Customer Service</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li>
-                <Link href="/shipping" className="hover:text-foreground">
-                  Shipping Info
-                </Link>
-              </li>
               <li>
                 <Link href="/returns" className="hover:text-foreground">
                   Returns & Exchanges

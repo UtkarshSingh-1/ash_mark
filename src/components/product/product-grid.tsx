@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db"
 import { ProductCard } from "./product-card"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { ProductSort } from "./product-sort"
 
 interface ProductGridProps {
   searchParams: {
@@ -12,6 +12,8 @@ interface ProductGridProps {
     sort?: string
     minPrice?: string
     maxPrice?: string
+    featured?: string
+    trending?: string
   }
 }
 
@@ -23,6 +25,8 @@ export async function ProductGrid({ searchParams }: ProductGridProps) {
   const category = sp.category
   const minPrice = sp.minPrice
   const maxPrice = sp.maxPrice
+  const featured = sp.featured
+  const trending = sp.trending
   const sort = sp.sort || 'createdAt'
   const order = 'desc'
 
@@ -32,8 +36,8 @@ export async function ProductGrid({ searchParams }: ProductGridProps) {
 
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
+      { name: { contains: search } },
+      { description: { contains: search } },
     ]
   }
 
@@ -45,6 +49,14 @@ export async function ProductGrid({ searchParams }: ProductGridProps) {
     where.price = {}
     if (minPrice) where.price.gte = parseFloat(minPrice)
     if (maxPrice) where.price.lte = parseFloat(maxPrice)
+  }
+
+  if (featured === "true") {
+    where.featured = true
+  }
+
+  if (trending === "true") {
+    where.trending = true
   }
 
   const orderBy: any = {}
@@ -95,16 +107,7 @@ export async function ProductGrid({ searchParams }: ProductGridProps) {
           </p>
         </div>
         
-        <Select defaultValue={sort}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="createdAt">Latest</SelectItem>
-            <SelectItem value="price">Price: Low to High</SelectItem>
-            <SelectItem value="name">Name: A to Z</SelectItem>
-          </SelectContent>
-        </Select>
+        <ProductSort value={sort} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

@@ -82,7 +82,7 @@ export function ProductStoryCard({ product }: ProductStoryCardProps) {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <DialogContent className="max-w-4xl w-[94vw] max-h-[82vh] overflow-y-auto custom-scrollbar">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
               {product.storyTitle}
@@ -96,45 +96,35 @@ export function ProductStoryCard({ product }: ProductStoryCardProps) {
           </DialogHeader>
           
           <div className="mt-4 space-y-6">
-            {product.images.length > 0 && (
-              <div className="relative w-full h-64 rounded-lg overflow-hidden">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <div className="relative w-full md:w-1/2 h-80 rounded-lg overflow-hidden bg-muted">
+                {product.storyImages.length > 0 ? (
+                  <Image
+                    src={product.storyImages[0]}
+                    alt={product.storyTitle}
+                    fill
+                    className="object-contain"
+                  />
+                ) : product.images.length > 0 ? (
+                  <Image
+                    src={product.images[0]}
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400">No Image</span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            <div className="prose prose-lg max-w-none">
-              <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                {product.storyContent}
-              </div>
-            </div>
 
-            {product.storyImages.length > 0 && (
-              <div>
-                <h3 className="text-xl font-semibold mb-4 text-gray-900">
-                  Story Images
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {product.storyImages.map((image, index) => (
-                    <div
-                      key={index}
-                      className="relative aspect-square rounded-lg overflow-hidden group"
-                    >
-                      <Image
-                        src={image}
-                        alt={`Story image ${index + 1}`}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    </div>
-                  ))}
+              <div className="prose prose-lg max-w-none md:w-1/2">
+                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                  {product.storyContent}
                 </div>
               </div>
-            )}
+            </div>
 
             <div className="pt-4 border-t">
               <Link

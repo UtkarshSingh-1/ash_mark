@@ -74,6 +74,8 @@ export function ProductFilters() {
     searchParams.get('minPrice'),
     searchParams.get('maxPrice'),
     searchParams.get('search'),
+    searchParams.get('featured'),
+    searchParams.get('trending'),
   ].filter(Boolean).length
 
   return (
@@ -119,7 +121,7 @@ export function ProductFilters() {
                 )}
                 {searchParams.get('minPrice') && (
                   <Badge variant="secondary" className="gap-1">
-                    Min: ₹{searchParams.get('minPrice')}
+                    Min: ???{searchParams.get('minPrice')}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => updateFilters('minPrice', '')}
@@ -128,10 +130,28 @@ export function ProductFilters() {
                 )}
                 {searchParams.get('maxPrice') && (
                   <Badge variant="secondary" className="gap-1">
-                    Max: ₹{searchParams.get('maxPrice')}
+                    Max: ???{searchParams.get('maxPrice')}
                     <X
                       className="h-3 w-3 cursor-pointer"
                       onClick={() => updateFilters('maxPrice', '')}
+                    />
+                  </Badge>
+                )}
+                {searchParams.get('featured') && (
+                  <Badge variant="secondary" className="gap-1">
+                    Featured
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => updateFilters('featured', '')}
+                    />
+                  </Badge>
+                )}
+                {searchParams.get('trending') && (
+                  <Badge variant="secondary" className="gap-1">
+                    Trending
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => updateFilters('trending', '')}
                     />
                   </Badge>
                 )}
