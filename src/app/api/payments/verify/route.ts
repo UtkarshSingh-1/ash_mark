@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       data: {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
-        paymentMethod: 'ONLINE',
+        paymentMethod: 'PREPAID',
         paymentStatus: 'PAID',
         status: order.status === 'PENDING' ? 'CONFIRMED' : order.status,
         updatedAt: new Date(),
