@@ -10,6 +10,8 @@ import { Footer } from "@/components/layout/footer";
 import { PromoMarquee } from "@/components/layout/promo-marquee";
 import { ReelsCarousel } from "@/components/reels/reels-carousel";
 
+export const revalidate = 3600; // revalidate every hour
+
 export default async function HomePage() {
   let featuredProducts: Array<any> = [];
   let trendingProducts: Array<any> = [];
@@ -103,7 +105,15 @@ export default async function HomePage() {
       <main>
         {/* Hero Section */}
         <section className="relative min-h-screen flex items-center justify-start overflow-hidden">
-          <video autoPlay muted loop className="absolute inset-0 hero-video">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/hero-video-poster.jpg"
+            className="absolute inset-0 hero-video object-cover"
+          >
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/50" />

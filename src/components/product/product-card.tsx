@@ -121,7 +121,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-shadow">
-      <div 
+      <div
         className="relative aspect-square overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -131,10 +131,11 @@ export function ProductCard({ product }: ProductCardProps) {
             src={images[currentImageIndex]}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
-        
+
         {/* Image Navigation Buttons */}
         {hasMultipleImages && isHovered && (
           <>
@@ -170,15 +171,15 @@ export function ProductCard({ product }: ProductCardProps) {
                 }}
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-all",
-                  currentImageIndex === index 
-                    ? "bg-white w-4" 
+                  currentImageIndex === index
+                    ? "bg-white w-4"
                     : "bg-white/50"
                 )}
               />
             ))}
           </div>
         )}
-        
+
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.featured && (
             <Badge className="bg-crimson-600">Featured</Badge>

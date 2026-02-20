@@ -62,7 +62,7 @@ export function ReelsCarousel({ reels }: { reels: any[] }) {
       if (entry.isIntersecting && entry.intersectionRatio > 0.8) {
         // Center reel → play muted until clicked
         video.muted = true;
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       } else {
         // Other reels → pause & reset
         video.pause();
@@ -93,7 +93,7 @@ export function ReelsCarousel({ reels }: { reels: any[] }) {
     if (video.muted) {
       video.muted = false;
     }
-    video.play().catch(() => {});
+    video.play().catch(() => { });
   };
 
   return (
@@ -108,7 +108,7 @@ export function ReelsCarousel({ reels }: { reels: any[] }) {
             videoRefs.current[index] = el;
           }}
           src={reel.videoUrl}
-          preload="metadata"
+          preload="none"
           playsInline
           muted
           className="w-[230px] h-[410px] rounded-lg border object-cover flex-shrink-0 snap-center"
