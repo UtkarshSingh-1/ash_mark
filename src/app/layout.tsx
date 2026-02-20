@@ -41,7 +41,9 @@ export default async function RootLayout({
               enableSystem={false}
               disableTransitionOnChange
             >
-              {children}
+              <main className="animate-fade-in">
+                {children}
+              </main>
               <Toaster />
             </ThemeProvider>
           </CartProvider>
