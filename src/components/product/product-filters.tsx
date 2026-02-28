@@ -25,30 +25,39 @@ export function ProductFilters() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
 
   useEffect(() => {
+    const controller = new AbortController()
+
+    let timeoutId: NodeJS.Timeout
+
     const fetchCategories = async () => {
       try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-        
-        const res = await fetch('/api/categories', { 
-          signal: controller.signal 
+        timeoutId = setTimeout(() => controller.abort(), 6000) // 6 second timeout
+
+        const res = await fetch('/api/categories', {
+          signal: controller.signal
         })
-        
+
         clearTimeout(timeoutId)
-        
+
         if (res.ok) {
           const data = await res.json()
           setCategories(data.categories || [])
         } else {
           setCategories([])
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === 'AbortError') return
         console.error('Error fetching categories:', error)
         setCategories([])
       }
     }
-    
+
     fetchCategories()
+
+    return () => {
+      controller.abort()
+      if (timeoutId) clearTimeout(timeoutId)
+    }
   }, [])
 
   const updateFilters = (key: string, value: string) => {
