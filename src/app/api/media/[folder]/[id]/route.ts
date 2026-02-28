@@ -29,7 +29,7 @@ export async function GET(
         headers.set("Content-Length", media.size.toString());
         headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
-        return new NextResponse(media.data, {
+        return new NextResponse(media.data as unknown as BodyInit, {
             status: 200,
             headers,
         });

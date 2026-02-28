@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const finalUrl = videoUrl || buildMediaUrl(mediaId);
+    const finalUrl = videoUrl || buildMediaUrl("reels", mediaId);
 
     await prisma.reel.create({
       data: {
