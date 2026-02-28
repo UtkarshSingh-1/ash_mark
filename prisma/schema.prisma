@@ -458,6 +458,7 @@ model Media {
   id        String    @id @default(cuid())
   mimeType  String
   size      Int
+  folder    String    @default("general")
   kind      MediaKind
   data      Bytes     @db.LongBlob
   createdAt DateTime  @default(now())

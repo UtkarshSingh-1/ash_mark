@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { 
-  Upload, 
-  X, 
-  Plus, 
-  Image as ImageIcon, 
+import {
+  Upload,
+  X,
+  Plus,
+  Image as ImageIcon,
   AlertCircle,
   Package,
   Tag,
@@ -153,7 +153,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
       formData.append('folder', 'products')
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/media/upload', {
           method: 'POST',
           body: formData,
         })
@@ -178,7 +178,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
     try {
       const uploadedUrls = await Promise.all(uploadPromises)
       const validUrls = uploadedUrls.filter(url => url !== null)
-      
+
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, ...validUrls]
@@ -188,7 +188,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
         title: "Success",
         description: `${validUrls.length} image(s) uploaded successfully`,
       })
-    } catch  {
+    } catch {
       toast({
         title: "Error",
         description: "Some images failed to upload",
@@ -273,7 +273,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
       formData.append('folder', 'products')
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/media/upload', {
           method: 'POST',
           body: formData,
         })
@@ -298,7 +298,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
     try {
       const uploadedUrls = await Promise.all(uploadPromises)
       const validUrls = uploadedUrls.filter(url => url !== null)
-      
+
       setFormData(prev => ({
         ...prev,
         storyImages: [...prev.storyImages, ...validUrls]
@@ -326,7 +326,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Validation Error",
@@ -427,7 +427,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
 
   const discardChanges = () => {
     if (!hasChanges) return
-    
+
     if (confirm('Are you sure you want to discard all changes?')) {
       // Reset form data to original values
       setFormData({
@@ -464,9 +464,9 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   <AlertCircle className="w-5 h-5 text-yellow-600" />
                   <span className="font-medium text-yellow-600">Unsaved Changes</span>
                 </div>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={discardChanges}
                   className="border-0 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600"
                 >
@@ -552,7 +552,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="comparePrice">Compare Price (₹)</Label>
                 <Input
@@ -612,7 +612,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                       }}
                     />
                   )}
-                  
+
                   {/* Main Image Badge */}
                   {index === 0 && (
                     <Badge className="absolute top-2 left-2 bg-crimson-600 text-xs border-0">
@@ -656,7 +656,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
                   )}
                 </div>
               ))}
-              
+
               <div
                 className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center"
                 onClick={() => fileInputRef.current?.click()}
@@ -892,16 +892,16 @@ export function EditProductForm({ product }: EditProductFormProps) {
                           variant="destructive"
                           size="sm"
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 border-0"
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            storyImages: prev.storyImages.filter((_, i) => i !== index) 
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            storyImages: prev.storyImages.filter((_, i) => i !== index)
                           }))}
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
                     ))}
-                    
+
                     <div
                       className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center"
                       onClick={() => {
@@ -932,7 +932,7 @@ export function EditProductForm({ product }: EditProductFormProps) {
         <Card className="border-0 shadow-md">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 justify-end">
-              <Button 
+              <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push(`/admin/products/${product.id}`)}
@@ -940,10 +940,10 @@ export function EditProductForm({ product }: EditProductFormProps) {
               >
                 Cancel
               </Button>
-              
-              
-              
-              <Button 
+
+
+
+              <Button
                 type="submit"
                 disabled={loading}
                 className="bg-crimson-600 hover:bg-crimson-700 border-0"

@@ -42,7 +42,7 @@ export function ProductStoryForm({ product }: ProductStoryFormProps) {
         formData.append("file", file)
         formData.append("purpose", "story_image")
 
-        const response = await fetch("/api/upload", {
+        const response = await fetch("/api/media/upload", {
           method: "POST",
           body: formData,
         })

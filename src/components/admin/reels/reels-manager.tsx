@@ -50,11 +50,13 @@ export default function ReelsManager() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("folder", "reels");
 
-    const uploadRes = await axios.post("/api/reels/upload", formData);
+    const uploadRes = await axios.post("/api/media/upload", formData);
 
     await axios.post("/api/reels/save", {
-      mediaId: uploadRes.data.mediaId,
+      mediaId: uploadRes.data.id,
+      videoUrl: uploadRes.data.url
     });
 
     setFile(null);

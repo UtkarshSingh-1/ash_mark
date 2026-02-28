@@ -55,11 +55,11 @@ export function ReviewForm({ productId, onReviewSubmitted }: ReviewFormProps) {
       return toast({ variant: "destructive", title: "Image ≤ 5MB only" })
     }
 
-    setUploading(true)
     const formData = new FormData()
     formData.append("file", file)
+    formData.append("folder", "reviews")
 
-    const res = await fetch("/api/review/upload", { method: "POST", body: formData })
+    const res = await fetch("/api/media/upload", { method: "POST", body: formData })
     const data = await res.json()
     setUploading(false)
 
@@ -113,11 +113,11 @@ export function ReviewForm({ productId, onReviewSubmitted }: ReviewFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          
+
           <div>
             <label className="text-sm font-medium">Rating *</label>
             <div className="flex gap-1 mt-1">
-              {[1,2,3,4,5].map(star => (
+              {[1, 2, 3, 4, 5].map(star => (
                 <button
                   key={star}
                   type="button"

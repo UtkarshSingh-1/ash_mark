@@ -10,12 +10,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { 
-  Upload, 
-  X, 
-  Plus, 
-  Image as ImageIcon, 
-  Save, 
+import {
+  Upload,
+  X,
+  Plus,
+  Image as ImageIcon,
+  Save,
   Eye,
   Tag,
   Ruler,
@@ -101,7 +101,7 @@ export function AddProductForm() {
       formData.append('folder', 'products')
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/media/upload', {
           method: 'POST',
           body: formData,
         })
@@ -126,7 +126,7 @@ export function AddProductForm() {
     try {
       const uploadedUrls = await Promise.all(uploadPromises)
       const validUrls = uploadedUrls.filter(url => url !== null)
-      
+
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, ...validUrls]
@@ -199,7 +199,7 @@ export function AddProductForm() {
       formData.append('folder', 'products')
 
       try {
-        const response = await fetch('/api/upload', {
+        const response = await fetch('/api/media/upload', {
           method: 'POST',
           body: formData,
         })
@@ -224,7 +224,7 @@ export function AddProductForm() {
     try {
       const uploadedUrls = await Promise.all(uploadPromises)
       const validUrls = uploadedUrls.filter(url => url !== null)
-      
+
       setFormData(prev => ({
         ...prev,
         storyImages: [...prev.storyImages, ...validUrls]
@@ -248,7 +248,7 @@ export function AddProductForm() {
 
   const handleSubmit = async (e: React.FormEvent, draft = false) => {
     e.preventDefault()
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Validation Error",
@@ -339,7 +339,7 @@ export function AddProductForm() {
                   required
                 />
               </div>
-              
+
             </div>
 
             <div className="space-y-2">
@@ -398,7 +398,7 @@ export function AddProductForm() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="comparePrice">Compare Price (₹)</Label>
                 <Input
@@ -461,7 +461,7 @@ export function AddProductForm() {
                   )}
                 </div>
               ))}
-              
+
               <div
                 className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center"
                 onClick={() => fileInputRef.current?.click()}
@@ -697,16 +697,16 @@ export function AddProductForm() {
                           variant="destructive"
                           size="sm"
                           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 border-0"
-                          onClick={() => setFormData(prev => ({ 
-                            ...prev, 
-                            storyImages: prev.storyImages.filter((_, i) => i !== index) 
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            storyImages: prev.storyImages.filter((_, i) => i !== index)
                           }))}
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
                     ))}
-                    
+
                     <div
                       className="aspect-square border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center"
                       onClick={() => {
@@ -735,9 +735,9 @@ export function AddProductForm() {
         <Card className="border-0 shadow-md">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 justify-end">
-              <Button 
+              <Button
                 type="button"
-                variant="outline" 
+                variant="outline"
                 onClick={(e) => handleSubmit(e, true)}
                 disabled={loading}
                 className="border-0 bg-muted/30"
@@ -745,8 +745,8 @@ export function AddProductForm() {
                 <Save className="w-4 h-4 mr-2" />
                 Save as Draft
               </Button>
-              
-              <Button 
+
+              <Button
                 type="button"
                 variant="outline"
                 className="border-0 bg-muted/30"
@@ -755,8 +755,8 @@ export function AddProductForm() {
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
               </Button>
-              
-              <Button 
+
+              <Button
                 type="submit"
                 disabled={loading}
                 className="bg-crimson-600 hover:bg-crimson-700 border-0"

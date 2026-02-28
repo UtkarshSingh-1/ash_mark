@@ -29,8 +29,6 @@ export default async function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        {/* Razorpay Script */}
-        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
       </head>
       <body className={inter.className}>
         <SessionProvider session={session}>
@@ -41,13 +39,15 @@ export default async function RootLayout({
               enableSystem={false}
               disableTransitionOnChange
             >
-              <main className="animate-fade-in">
+              <main>
                 {children}
               </main>
               <Toaster />
             </ThemeProvider>
           </CartProvider>
         </SessionProvider>
+        {/* Razorpay Script */}
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   )

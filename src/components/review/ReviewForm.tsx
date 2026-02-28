@@ -23,8 +23,9 @@ export default function ReviewForm({ productId, onAdd }: any) {
 
     const formData = new FormData()
     formData.append("file", file)
+    formData.append("folder", "reviews")
 
-    const res = await fetch("/api/review/upload", { method: "POST", body: formData })
+    const res = await fetch("/api/media/upload", { method: "POST", body: formData })
     const data = await res.json()
     if (data.error) {
       alert(data.error)
@@ -56,7 +57,7 @@ export default function ReviewForm({ productId, onAdd }: any) {
   return (
     <div className="border p-4 rounded space-y-3">
       <div className="flex gap-1">
-        {[1,2,3,4,5].map(n => (
+        {[1, 2, 3, 4, 5].map(n => (
           <button key={n} onClick={() => setRating(n)}>
             <span className={`text-xl ${n <= rating ? "text-yellow-500" : "text-gray-400"}`}>★</span>
           </button>

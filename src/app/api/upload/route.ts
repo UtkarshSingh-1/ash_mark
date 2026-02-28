@@ -12,18 +12,19 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get("file") as File
     const purpose = (formData.get("purpose") as string) || "product_image"
+    const folder = (formData.get("folder") as string) || "general"
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    const uploaded = await storeMediaFile(file, purpose as any)
+    const uploaded = await storeMediaFile(file, purpose, folder)
 
     return NextResponse.json({
       success: true,
       url: uploaded.url,
       type: uploaded.type,
-    })  
+    })
   } catch (error) {
     console.error("Error uploading review media:", error)
     return NextResponse.json(

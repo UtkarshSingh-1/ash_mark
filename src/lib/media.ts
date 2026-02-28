@@ -30,11 +30,11 @@ export function getMediaLimitBytes(purpose: MediaPurpose, kind: "image" | "video
   return limitMb * MB
 }
 
-export function buildMediaUrl(id: string) {
-  return `/api/media/${id}`
+export function buildMediaUrl(folder: string, id: string) {
+  return `/api/media/${folder}/${id}`
 }
 
-export async function storeMediaFile(file: File, purpose: MediaPurpose) {
+export async function storeMediaFile(file: File, purpose: string, folder: string = "general") {
   const isVideo = file.type.startsWith("video")
   const isImage = file.type.startsWith("image")
 
@@ -42,7 +42,7 @@ export async function storeMediaFile(file: File, purpose: MediaPurpose) {
     throw new Error("Only image/video uploads are allowed")
   }
 
-  const limit = getMediaLimitBytes(purpose, isVideo ? "video" : "image")
+  const limit = getMediaLimitBytes(purpose as MediaPurpose, isVideo ? "video" : "image")
 
   if (limit > 0 && file.size > limit) {
     const limitMb = Math.floor(limit / MB)
@@ -53,17 +53,18 @@ export async function storeMediaFile(file: File, purpose: MediaPurpose) {
 
   const created = await prisma.media.create({
     data: {
-      mimeType: file.type,
+      mimeType: file.type || (isVideo ? "video/mp4" : "image/jpeg"),
       size: file.size,
+      folder: folder.toLowerCase(),
       kind: isVideo ? "VIDEO" : "IMAGE",
       data: buffer,
     },
-    select: { id: true },
+    select: { id: true, folder: true },
   })
 
   return {
     id: created.id,
-    url: buildMediaUrl(created.id),
+    url: buildMediaUrl(created.folder, created.id),
     type: isVideo ? "video" : "image",
   }
 }

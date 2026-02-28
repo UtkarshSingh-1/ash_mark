@@ -36,7 +36,7 @@ export default async function HomePage() {
         }),
       ]),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Database query timeout")), 8000)
+        setTimeout(() => reject(new Error("Database query timeout")), 12000)
       ),
     ]) as [any[], any[], any[]];
 
@@ -67,7 +67,7 @@ export default async function HomePage() {
             orderBy: { createdAt: "desc" },
           }),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Timeout")), 5000)
+            setTimeout(() => reject(new Error("Timeout")), 10000)
           ),
         ]) as any[];
         featuredProducts = anyFeatured.map(serialize);
@@ -85,7 +85,7 @@ export default async function HomePage() {
             orderBy: { createdAt: "desc" },
           }),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Timeout")), 5000)
+            setTimeout(() => reject(new Error("Timeout")), 10000)
           ),
         ]) as any[];
         trendingProducts = anyTrending.map(serialize);
