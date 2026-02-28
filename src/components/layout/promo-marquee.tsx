@@ -11,11 +11,13 @@ type BannerPromo = {
 }
 
 export function PromoMarquee() {
+  const [mounted, setMounted] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const [promos, setPromos] = useState<BannerPromo[]>([])
 
   useEffect(() => {
-    if (sessionStorage.getItem("promo-marquee-dismissed") === "true") {
+    setMounted(true)
+    if (typeof window !== "undefined" && sessionStorage.getItem("promo-marquee-dismissed") === "true") {
       setDismissed(true)
       return
     }
@@ -26,7 +28,7 @@ export function PromoMarquee() {
       .catch(() => setPromos([]))
   }, [])
 
-  if (dismissed || promos.length === 0) return null
+  if (!mounted || dismissed || promos.length === 0) return null
 
   return (
     <div className="promo-marquee bg-[#8B0000] text-white py-2 overflow-hidden">
