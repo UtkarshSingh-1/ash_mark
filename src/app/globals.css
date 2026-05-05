@@ -854,7 +854,7 @@ nav.scrolled {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/hero-laptop.jpeg');
+  background-image: url('/hero-laptop.wbep');
   background-size: cover;
   background-position: center;
   filter: saturate(.8) contrast(1.05) brightness(.9);
@@ -1504,7 +1504,7 @@ section {
 
 .editorial-img {
   aspect-ratio: 4/5;
-  background: url('/editorial.jpeg') center/cover;
+  background: url('/editorial.wbep') center/cover;
   position: relative;
   overflow: hidden;
 }
