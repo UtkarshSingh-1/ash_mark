@@ -5,7 +5,7 @@ import { ProductGrid } from "@/components/product/product-grid"
 import { ProductFilters } from "@/components/product/product-filters"
 import { ProductStoriesSection } from "@/components/product/product-stories-section"
 import { MobileFilters } from "@/components/product/mobile-filters"
-
+ 
 interface SearchParamsShape {
   search?: string
   category?: string
