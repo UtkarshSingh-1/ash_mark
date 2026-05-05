@@ -220,7 +220,7 @@ export default function AshMark() {
         </p>
         <div className="preloader-bar" />
         <div className="preloader-bottom">
-          <span>EST. Mathura — 2025</span>
+          <span>EST. Mathura — 2025</span> 
           <span id="preCount">000</span>
         </div>
       </div>
