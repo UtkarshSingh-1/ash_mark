@@ -202,7 +202,7 @@ export default function AshMark() {
       <div className="noise" />
       <div className="theme-ripple" id="themeRipple" />
       <div className="scroll-progress" id="scrollProgress" />
-      <br />
+      <br /><br /><br />
       <PromoMarquee />
 
       {/* CURSOR */}
