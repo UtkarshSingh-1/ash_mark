@@ -854,7 +854,7 @@ nav.scrolled {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/hero-laptop.wbep');
+  background-image: url('/hero-laptop.webp');
   background-size: cover;
   background-position: center;
   filter: saturate(.8) contrast(1.05) brightness(.9);
@@ -1504,7 +1504,7 @@ section {
 
 .editorial-img {
   aspect-ratio: 4/5;
-  background: url('/editorial.wbep') center/cover;
+  background: url('/editorial.webp') center/cover;
   position: relative;
   overflow: hidden;
 }
@@ -2160,5 +2160,5 @@ footer {
 
 /* 📱 Mobile hero image */
 @media (max-width: 768px) {
-  .hero-bg { background-image: url('/hero-mobile.jpeg'); }
+  .hero-bg { background-image: url('/hero-mobile.webp'); }
 }
