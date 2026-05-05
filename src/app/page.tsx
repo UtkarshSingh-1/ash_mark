@@ -17,9 +17,6 @@ export default function AshMark() {
     router.prefetch("/products");
     router.prefetch("/wishlist");
     router.prefetch("/cart");
-    ["crane", "bloom", "cartographer", "verse", "horizon"].forEach(slug => {
-      router.prefetch(`/products/${slug}`);
-    });
   }, [router]);
 
   useEffect(() => {
@@ -128,6 +125,13 @@ export default function AshMark() {
     "no ", "two ", "are ", "alike.",
   ];
 
+  // Navigate to /products with slug as query param so ProductCard can highlight it
+  // Once you create /app/products/[slug]/page.tsx, change this back to:
+  //   router.push(`/products/${p.slug}`)
+  const handleProductClick = (slug: string) => {
+    router.push(`/products?slug=${slug}`);
+  };
+
   return (
     <>
       <Script src="/script.js" strategy="afterInteractive" />
@@ -198,7 +202,7 @@ export default function AshMark() {
       <div className="noise" />
       <div className="theme-ripple" id="themeRipple" />
       <div className="scroll-progress" id="scrollProgress" />
-      <br /><br /><br />
+      <br />
       <PromoMarquee />
 
       {/* CURSOR */}
@@ -406,7 +410,7 @@ export default function AshMark() {
                   </div>
                   <div
                     className="product-img-inner"
-                    onClick={() => router.push(`/products/${p.slug}`)}
+                    onClick={() => handleProductClick(p.slug)}
                     style={{ cursor: "pointer" }}
                   >
                     <img src={p.img} alt={p.alt} loading="lazy" />
@@ -421,7 +425,7 @@ export default function AshMark() {
                   <button
                     className="p-cta"
                     aria-label={`View ${p.name} ${p.ital}`}
-                    onClick={() => router.push(`/products/${p.slug}`)}
+                    onClick={() => handleProductClick(p.slug)}
                     type="button"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
