@@ -92,7 +92,7 @@ export default async function ProductPage({
       />
 
       <Navbar />
-    < /br>< /br>
+    <br /> <br />
       <main style={{ position: "relative", zIndex: 10 }}>
 
         {/* ════════ HERO SECTION ════════ */}
