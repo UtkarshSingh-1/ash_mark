@@ -57,160 +57,381 @@ export default async function ProductPage({
     storyImages,
   }
 
+  const discountPercent =
+    serializedProduct.comparePrice
+      ? Math.round(
+          ((serializedProduct.comparePrice - serializedProduct.price) /
+            serializedProduct.comparePrice) *
+            100
+        )
+      : null
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F0E8] font-['Cormorant_Garamond',_Georgia,_serif]">
-      {/* ── Ambient top glow ── */}
+    <div
+      className="min-h-screen"
+      style={{
+        background: "#0A0A0A",
+        color: "#F5F0E8",
+        fontFamily: "Georgia, 'Times New Roman', serif",
+      }}
+    >
+      {/* Ambient top glow — purely decorative */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-x-0 top-0 h-[420px] z-0"
         style={{
+          pointerEvents: "none",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 420,
+          zIndex: 0,
           background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.18) 0%, transparent 70%)",
+            "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.15) 0%, transparent 70%)",
         }}
       />
 
       <Navbar />
 
-      <main className="relative z-10">
-        {/* ════════════════════════════════════════
-            HERO PRODUCT SECTION
-        ════════════════════════════════════════ */}
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-6 pb-0 md:pt-10">
-          {/* Breadcrumb */}
+      <main style={{ position: "relative", zIndex: 10 }}>
+
+        {/* ════════ HERO SECTION ════════ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 md:pt-10">
+
+          {/* Breadcrumb — display only */}
           <nav
             aria-label="Breadcrumb"
-            className="mb-6 md:mb-8 flex items-center gap-2 text-[11px] sm:text-xs tracking-[0.18em] uppercase text-[#8A7A6A]"
+            className="mb-6 flex flex-wrap items-center gap-2"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "#8A7A6A",
+            }}
           >
-            <span className="hover:text-[#C4A064] transition-colors cursor-pointer">
-              Home
-            </span>
-            <span className="opacity-40">╱</span>
-            <span className="hover:text-[#C4A064] transition-colors cursor-pointer">
-              {serializedProduct.category.name}
-            </span>
-            <span className="opacity-40">╱</span>
-            <span className="text-[#F5F0E8] opacity-60 truncate max-w-[140px] sm:max-w-none">
+            <span>Home</span>
+            <span style={{ opacity: 0.4 }}>╱</span>
+            <span>{serializedProduct.category.name}</span>
+            <span style={{ opacity: 0.4 }}>╱</span>
+            <span
+              className="truncate max-w-[160px] sm:max-w-xs"
+              style={{ color: "#F5F0E8", opacity: 0.55 }}
+            >
               {serializedProduct.name}
             </span>
           </nav>
 
-          {/* Two-column product grid */}
-          <div className="grid lg:grid-cols-[1fr_480px] xl:grid-cols-[1fr_520px] gap-8 lg:gap-14 xl:gap-20 items-start">
+          {/* Two-column layout */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 xl:gap-20 items-start">
 
-            {/* ── LEFT: Images ── */}
-            <div className="relative">
-              {/* Decorative corner accent */}
+            {/* LEFT — Images */}
+            <div style={{ position: "relative" }}>
+              {/* Decorative corner lines — no interaction */}
               <div
                 aria-hidden="true"
-                className="hidden lg:block absolute -top-4 -left-4 w-16 h-16 border-t border-l border-[#C4A064]/30 pointer-events-none z-10"
+                className="hidden lg:block"
+                style={{
+                  position: "absolute",
+                  top: -14,
+                  left: -14,
+                  width: 52,
+                  height: 52,
+                  borderTop: "1px solid rgba(196,160,100,0.3)",
+                  borderLeft: "1px solid rgba(196,160,100,0.3)",
+                  pointerEvents: "none",
+                  zIndex: 10,
+                }}
               />
               <div
                 aria-hidden="true"
-                className="hidden lg:block absolute -bottom-4 -right-4 w-16 h-16 border-b border-r border-[#C4A064]/30 pointer-events-none z-10"
+                className="hidden lg:block"
+                style={{
+                  position: "absolute",
+                  bottom: -14,
+                  right: -14,
+                  width: 52,
+                  height: 52,
+                  borderBottom: "1px solid rgba(196,160,100,0.3)",
+                  borderRight: "1px solid rgba(196,160,100,0.3)",
+                  pointerEvents: "none",
+                  zIndex: 10,
+                }}
               />
 
-              <div className="rounded-[2px] overflow-hidden ring-1 ring-white/5 shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
+              <div
+                style={{
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+                  border: "1px solid rgba(255,255,255,0.05)",
+                }}
+              >
                 <ProductImages images={images} name={serializedProduct.name} />
               </div>
 
-              {/* Floating badges */}
-              <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+              {/* Floating badges — display only */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 16,
+                  left: 16,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  zIndex: 20,
+                }}
+              >
                 {serializedProduct.featured && (
-                  <span className="inline-flex items-center gap-1.5 bg-[#C4A064] text-[#0A0A0A] text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1.5 rounded-[2px] shadow-lg">
-                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 12 12">
-                      <path d="M6 0l1.5 4.5H12l-3.75 2.7L9.75 12 6 9.3 2.25 12l1.5-4.8L0 4.5h4.5z" />
-                    </svg>
-                    Featured
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "#C4A064",
+                      color: "#0A0A0A",
+                      fontSize: 10,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                      padding: "6px 12px",
+                      borderRadius: 2,
+                    }}
+                  >
+                    ★ Featured
                   </span>
                 )}
                 {serializedProduct.trending && (
-                  <span className="inline-flex items-center gap-1.5 bg-[#1A1A1A] border border-[#C4A064]/50 text-[#C4A064] text-[10px] tracking-[0.2em] uppercase font-semibold px-3 py-1.5 rounded-[2px] shadow-lg">
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      background: "#1A1A1A",
+                      border: "1px solid rgba(196,160,100,0.5)",
+                      color: "#C4A064",
+                      fontSize: 10,
+                      letterSpacing: "0.2em",
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                      padding: "6px 12px",
+                      borderRadius: 2,
+                    }}
+                  >
                     ↑ Trending
                   </span>
                 )}
                 {serializedProduct.comparePrice && (
-                  <span className="inline-flex items-center gap-1.5 bg-[#8B1A1A] text-white text-[10px] tracking-[0.16em] uppercase font-semibold px-3 py-1.5 rounded-[2px] shadow-lg">
+                  <span
+                    style={{
+                      background: "#8B1A1A",
+                      color: "#fff",
+                      fontSize: 10,
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                      padding: "6px 12px",
+                      borderRadius: 2,
+                    }}
+                  >
                     Sale
                   </span>
                 )}
               </div>
             </div>
 
-            {/* ── RIGHT: Info ── */}
-            <div className="lg:sticky lg:top-[88px] flex flex-col">
-              {/* Category pill */}
-              <div className="mb-4">
-                <span className="inline-block text-[10px] tracking-[0.28em] uppercase text-[#C4A064] border border-[#C4A064]/40 px-3 py-1 rounded-[2px]">
+            {/* RIGHT — Info */}
+            <div
+              className="lg:sticky lg:top-24"
+              style={{ display: "flex", flexDirection: "column" }}
+            >
+              {/* Category pill — display only */}
+              <div style={{ marginBottom: 16 }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: 10,
+                    letterSpacing: "0.28em",
+                    textTransform: "uppercase",
+                    color: "#C4A064",
+                    border: "1px solid rgba(196,160,100,0.4)",
+                    padding: "4px 12px",
+                    borderRadius: 2,
+                  }}
+                >
                   {serializedProduct.category.name}
                 </span>
               </div>
 
-              {/* Product name */}
-              <h1 className="text-3xl sm:text-4xl xl:text-[42px] leading-[1.12] tracking-[-0.01em] text-[#F5F0E8] mb-5 font-light">
+              {/* Product name — display only */}
+              <h1
+                className="text-3xl sm:text-4xl xl:text-5xl"
+                style={{
+                  fontWeight: 300,
+                  lineHeight: 1.12,
+                  letterSpacing: "-0.01em",
+                  color: "#F5F0E8",
+                  marginBottom: 20,
+                }}
+              >
                 {serializedProduct.name}
               </h1>
 
-              {/* Divider rule */}
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-px flex-1 bg-gradient-to-r from-[#C4A064]/60 to-transparent" />
-                <svg
-                  className="w-3 h-3 text-[#C4A064]/60 flex-shrink-0"
-                  viewBox="0 0 12 12"
-                  fill="currentColor"
-                >
-                  <circle cx="6" cy="6" r="2" />
-                </svg>
-                <div className="h-px flex-1 bg-gradient-to-l from-[#C4A064]/60 to-transparent" />
+              {/* Gold divider — display only */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 24,
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background:
+                      "linear-gradient(to right, rgba(196,160,100,0.6), transparent)",
+                  }}
+                />
+                <div
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "rgba(196,160,100,0.5)",
+                    flexShrink: 0,
+                  }}
+                />
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background:
+                      "linear-gradient(to left, rgba(196,160,100,0.6), transparent)",
+                  }}
+                />
               </div>
 
-              {/* Pricing */}
-              <div className="flex items-end gap-3 mb-8">
-                <span className="text-[32px] sm:text-[36px] font-light tracking-tight text-[#C4A064]">
+              {/* Pricing — display only */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 12,
+                  marginBottom: 32,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span
+                  className="text-4xl sm:text-5xl"
+                  style={{
+                    fontWeight: 300,
+                    color: "#C4A064",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
                   ₹{serializedProduct.price.toLocaleString("en-IN")}
                 </span>
                 {serializedProduct.comparePrice && (
                   <>
-                    <span className="text-xl text-[#6A5A4A] line-through mb-1">
+                    <span
+                      style={{
+                        fontSize: 20,
+                        color: "#6A5A4A",
+                        textDecoration: "line-through",
+                        marginBottom: 4,
+                      }}
+                    >
                       ₹{serializedProduct.comparePrice.toLocaleString("en-IN")}
                     </span>
-                    <span className="text-xs text-[#8B1A1A] bg-[#8B1A1A]/15 border border-[#8B1A1A]/30 px-2 py-0.5 rounded-[2px] mb-1.5 tracking-wide">
-                      {Math.round(
-                        ((serializedProduct.comparePrice - serializedProduct.price) /
-                          serializedProduct.comparePrice) *
-                          100
-                      )}
-                      % off
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "#e87070",
+                        background: "rgba(139,26,26,0.18)",
+                        border: "1px solid rgba(139,26,26,0.35)",
+                        padding: "2px 8px",
+                        borderRadius: 2,
+                        marginBottom: 4,
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      {discountPercent}% off
                     </span>
                   </>
                 )}
               </div>
 
-              {/* Product Info Component */}
-              <div className="product-info-wrapper">
-                <ProductInfo product={serializedProduct} />
-              </div>
+              {/* ── ProductInfo: completely untouched, no wrapper overrides ── */}
+              <ProductInfo product={serializedProduct} />
 
-              {/* Stock indicator */}
+              {/* Low-stock indicator — display only */}
               {serializedProduct.stock > 0 && serializedProduct.stock <= 10 && (
-                <div className="mt-4 flex items-center gap-2 text-xs text-[#C4956A] tracking-wide">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#C4956A] animate-pulse" />
+                <div
+                  style={{
+                    marginTop: 16,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 12,
+                    color: "#C4956A",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  <span
+                    className="animate-pulse"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#C4956A",
+                      flexShrink: 0,
+                      display: "inline-block",
+                    }}
+                  />
                   Only {serializedProduct.stock} left in stock
                 </div>
               )}
 
-              {/* Trust signals */}
-              <div className="mt-8 pt-6 border-t border-white/[0.07] grid grid-cols-3 gap-3 text-center">
+              {/* Trust signals — display only */}
+              <div
+                style={{
+                  marginTop: 28,
+                  paddingTop: 24,
+                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: 12,
+                  textAlign: "center",
+                }}
+              >
                 {[
                   { icon: "🚚", label: "Free Delivery", sub: "Orders over ₹999" },
                   { icon: "↩", label: "Easy Returns", sub: "Within 30 days" },
                   { icon: "✦", label: "Authentic", sub: "100% genuine" },
                 ].map((item) => (
-                  <div key={item.label} className="flex flex-col items-center gap-1">
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-[10px] tracking-[0.12em] uppercase text-[#F5F0E8]/80 font-medium">
+                  <div
+                    key={item.label}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <span style={{ fontSize: 20 }}>{item.icon}</span>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        color: "rgba(245,240,232,0.8)",
+                        fontWeight: 600,
+                      }}
+                    >
                       {item.label}
                     </span>
-                    <span className="text-[10px] text-[#6A5A4A]">{item.sub}</span>
+                    <span style={{ fontSize: 10, color: "#6A5A4A" }}>{item.sub}</span>
                   </div>
                 ))}
               </div>
@@ -218,70 +439,174 @@ export default async function ProductPage({
           </div>
         </section>
 
-        {/* ════════════════════════════════════════
-            DECORATIVE SECTION BREAK
-        ════════════════════════════════════════ */}
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 mt-16 md:mt-24 mb-2">
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-white/[0.07]" />
-            <div className="flex gap-2 items-center text-[#C4A064]/40">
-              <span className="w-1 h-1 rounded-full bg-current" />
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              <span className="w-1 h-1 rounded-full bg-current" />
+        {/* ════════ SECTION DIVIDER ════════ */}
+        <div
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
+          style={{ marginTop: 80, marginBottom: 8 }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <span
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "rgba(196,160,100,0.35)",
+                  display: "inline-block",
+                }}
+              />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "rgba(196,160,100,0.35)",
+                  display: "inline-block",
+                }}
+              />
+              <span
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "rgba(196,160,100,0.35)",
+                  display: "inline-block",
+                }}
+              />
             </div>
-            <div className="h-px flex-1 bg-white/[0.07]" />
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
           </div>
         </div>
 
-        {/* ════════════════════════════════════════
-            PRODUCT DETAILS TABS
-        ════════════════════════════════════════ */}
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 mt-10 md:mt-14">
-          <div className="mb-8">
-            <h2 className="text-[10px] tracking-[0.3em] uppercase text-[#C4A064] mb-2">
+        {/* ════════ PRODUCT TABS ════════ */}
+        <section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
+          style={{ marginTop: 48 }}
+        >
+          <div style={{ marginBottom: 28 }}>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                color: "#C4A064",
+                marginBottom: 6,
+              }}
+            >
               Details
-            </h2>
-            <p className="text-2xl sm:text-3xl font-light text-[#F5F0E8]/90 tracking-[-0.01em]">
+            </p>
+            <p
+              className="text-2xl sm:text-3xl"
+              style={{
+                fontWeight: 300,
+                color: "rgba(245,240,232,0.9)",
+                letterSpacing: "-0.01em",
+              }}
+            >
               Product Information
             </p>
           </div>
-
-          <div className="bg-[#111111] ring-1 ring-white/[0.06] rounded-[2px] overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.4)]">
+          <div
+            style={{
+              background: "#111111",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 2,
+              overflow: "hidden",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+            }}
+          >
             <ProductTabs product={serializedProduct} />
           </div>
         </section>
 
-        {/* ════════════════════════════════════════
-            REVIEWS SECTION
-        ════════════════════════════════════════ */}
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 mt-16 md:mt-24">
-          <div className="mb-8">
-            <h2 className="text-[10px] tracking-[0.3em] uppercase text-[#C4A064] mb-2">
+        {/* ════════ REVIEWS ════════ */}
+        <section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
+          style={{ marginTop: 80 }}
+        >
+          <div style={{ marginBottom: 28 }}>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                color: "#C4A064",
+                marginBottom: 6,
+              }}
+            >
               Reviews
-            </h2>
-            <p className="text-2xl sm:text-3xl font-light text-[#F5F0E8]/90 tracking-[-0.01em]">
+            </p>
+            <p
+              className="text-2xl sm:text-3xl"
+              style={{
+                fontWeight: 300,
+                color: "rgba(245,240,232,0.9)",
+                letterSpacing: "-0.01em",
+              }}
+            >
               What Our Customers Say
             </p>
           </div>
-
-          <div className="bg-[#0F0F0F] ring-1 ring-white/[0.05] rounded-[2px] overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.35)]">
+          <div
+            style={{
+              background: "#0F0F0F",
+              border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 2,
+              overflow: "hidden",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.35)",
+            }}
+          >
             <ReviewSection productId={product.id} />
           </div>
         </section>
 
-        {/* ════════════════════════════════════════
-            RELATED PRODUCTS
-        ════════════════════════════════════════ */}
-        <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 mt-16 md:mt-24 mb-20 md:mb-28">
-          <div className="mb-10">
-            <h2 className="text-[10px] tracking-[0.3em] uppercase text-[#C4A064] mb-2">
+        {/* ════════ RELATED PRODUCTS ════════ */}
+        <section
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
+          style={{ marginTop: 80, marginBottom: 100 }}
+        >
+          <div style={{ marginBottom: 36 }}>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+                color: "#C4A064",
+                marginBottom: 6,
+              }}
+            >
               Discover More
-            </h2>
-            <div className="flex items-end justify-between gap-4 flex-wrap">
-              <p className="text-2xl sm:text-3xl font-light text-[#F5F0E8]/90 tracking-[-0.01em]">
+            </p>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              <p
+                className="text-2xl sm:text-3xl"
+                style={{
+                  fontWeight: 300,
+                  color: "rgba(245,240,232,0.9)",
+                  letterSpacing: "-0.01em",
+                }}
+              >
                 You May Also Like
               </p>
-              <div className="h-px flex-1 min-w-[40px] max-w-[200px] bg-gradient-to-r from-[#C4A064]/40 to-transparent self-center" />
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 40,
+                  maxWidth: 200,
+                  height: 1,
+                  background:
+                    "linear-gradient(to right, rgba(196,160,100,0.4), transparent)",
+                  alignSelf: "center",
+                }}
+              />
             </div>
           </div>
 
@@ -290,34 +615,10 @@ export default async function ProductPage({
             currentProductId={product.id}
           />
         </section>
+
       </main>
 
       <Footer />
-
-      {/* Global styles scoped to this page */}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
-        ::-webkit-scrollbar-thumb { background: #3A3028; border-radius: 2px; }
-        ::-webkit-scrollbar-thumb:hover { background: #C4A064; }
-
-        /* Selection */
-        ::selection { background: rgba(196,160,100,0.28); color: #F5F0E8; }
-
-        /* Smooth scroll */
-        html { scroll-behavior: smooth; }
-
-        /* Override common Tailwind reset conflicts */
-        .min-h-screen { min-height: 100svh; }
-
-        /* ProductInfo button/input overrides (safe CSS — avoids Tailwind attribute-selector parse errors) */
-        .product-info-wrapper button { border-radius: 2px; }
-        .product-info-wrapper select { border-radius: 2px; }
-        .product-info-wrapper input  { border-radius: 2px; }
-      `}</style>
     </div>
   )
 }
