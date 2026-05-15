@@ -98,9 +98,9 @@ export default function AshMark() {
   const products = [
     { n: "01", slug: "crane",        name: "The Chronicle of", ital: "FUTURE",        detail: "Silk thread on organic cotton",        price: "₹1,499",  stock: "12 LEFT", img: "product1.webp", alt: "The Golden Crane Embroidered Shirt" },
     { n: "02", slug: "bloom",        name: "Thought behind",   ital: "FALLING BLOOM",        detail: "Hand-stitched florals, charcoal cotton", price: "₹1,399",  stock: "23 LEFT", img: "product2.webp", alt: "Midnight Bloom Shirt" },
-    { n: "03", slug: "cartographer", name: "The Tale of",        ital: "Dominant Female", detail: "Map-line embroidery, ivory linen",      price: "₹10,600", stock: "07 LEFT", img: "product3.webp", alt: "The Cartographer Shirt" },
-    { n: "04", slug: "verse",        name: "The Narrative of",      ital: "WRATH",        detail: "Olive thread poetry, sand cotton",     price: "₹7,800",  stock: "31 LEFT", img: "product4.webp", alt: "Olive Verse Shirt" },
-    { n: "05", slug: "horizon",       name: "The Tale of",        ital: "Dominant Male",      detail: "Sun-rust gradient stitching",          price: "₹8,900",  stock: "18 LEFT", img: "product5.webp", alt: "Rust Horizon Shirt" },
+    { n: "03", slug: "cartographer", name: "The Tale of",        ital: "Dominant Female", detail: "Map-line embroidery, ivory linen",      price: "₹899", stock: "07 LEFT", img: "product3.webp", alt: "The Cartographer Shirt" },
+    { n: "04", slug: "verse",        name: "The Narrative of",      ital: "WRATH",        detail: "Olive thread poetry, sand cotton",     price: "₹1,400",  stock: "31 LEFT", img: "product4.webp", alt: "Olive Verse Shirt" },
+    { n: "05", slug: "horizon",       name: "The Tale of",        ital: "Dominant Male",      detail: "Sun-rust gradient stitching",          price: "₹899",  stock: "18 LEFT", img: "product5.webp", alt: "Rust Horizon Shirt" },
   ];
 
   const dropItems = [
