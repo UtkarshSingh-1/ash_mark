@@ -84,7 +84,7 @@ export default async function ProductPage({
           top: 0,
           left: 0,
           right: 0,
-          height: 420,
+          height: "clamp(200px, 50vh, 420px)",
           zIndex: 0,
           background:
             "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.15) 0%, transparent 70%)",
@@ -96,37 +96,40 @@ export default async function ProductPage({
       <main style={{ position: "relative", zIndex: 10 }}>
 
         {/* ════════ HERO SECTION ════════ */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 md:pt-10">
+        <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 pt-3 sm:pt-6 md:pt-10">
 
           {/* Breadcrumb — display only */}
           <nav
             aria-label="Breadcrumb"
-            className="mb-6 flex flex-wrap items-center gap-2"
+            className="mb-4 sm:mb-6 flex flex-wrap items-center gap-1 sm:gap-2"
             style={{
-              fontSize: 11,
+              fontSize: "clamp(8px, 2.5vw, 11px)",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "#8A7A6A",
             }}
           >
-            <span>Home</span>
-            <span style={{ opacity: 0.4 }}>╱</span>
-            <span>{serializedProduct.category.name}</span>
-            <span style={{ opacity: 0.4 }}>╱</span>
+            <span className="hidden sm:inline">Home</span>
+            <span style={{ opacity: 0.4 }} className="hidden sm:inline">╱</span>
+            <span className="hidden sm:inline">{serializedProduct.category.name}</span>
+            <span style={{ opacity: 0.4 }} className="hidden sm:inline">╱</span>
             <span
-              className="truncate max-w-[160px] sm:max-w-xs"
+              className="truncate max-w-[120px] sm:max-w-xs"
               style={{ color: "#F5F0E8", opacity: 0.55 }}
             >
               {serializedProduct.name}
             </span>
+            <span className="sm:hidden text-xs opacity-75">
+              {serializedProduct.category.name}
+            </span>
           </nav>
 
-          {/* Two-column layout */}
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 xl:gap-20 items-start">
+          {/* Two-column layout — stacks on mobile */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-14 xl:gap-20 items-start">
 
             {/* LEFT — Images */}
             <div style={{ position: "relative" }}>
-              {/* Decorative corner lines — no interaction */}
+              {/* Decorative corner lines — no interaction, hidden on mobile */}
               <div
                 aria-hidden="true"
                 className="hidden lg:block"
@@ -162,7 +165,7 @@ export default async function ProductPage({
                 style={{
                   borderRadius: 2,
                   overflow: "hidden",
-                  boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+                  boxShadow: "0 16px 40px sm:0 32px 80px rgba(0,0,0,0.6)",
                   border: "1px solid rgba(255,255,255,0.05)",
                 }}
               >
@@ -173,11 +176,11 @@ export default async function ProductPage({
               <div
                 style={{
                   position: "absolute",
-                  top: 16,
-                  left: 16,
+                  top: "clamp(12px, 3vw, 16px)",
+                  left: "clamp(12px, 3vw, 16px)",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 8,
+                  gap: "clamp(6px, 2vw, 8px)",
                   zIndex: 20,
                 }}
               >
@@ -189,12 +192,13 @@ export default async function ProductPage({
                       gap: 6,
                       background: "#C4A064",
                       color: "#0A0A0A",
-                      fontSize: 10,
+                      fontSize: "clamp(8px, 2vw, 10px)",
                       letterSpacing: "0.2em",
                       textTransform: "uppercase",
                       fontWeight: 700,
-                      padding: "6px 12px",
+                      padding: "4px 10px",
                       borderRadius: 2,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     ★ Featured
@@ -209,12 +213,13 @@ export default async function ProductPage({
                       background: "#1A1A1A",
                       border: "1px solid rgba(196,160,100,0.5)",
                       color: "#C4A064",
-                      fontSize: 10,
+                      fontSize: "clamp(8px, 2vw, 10px)",
                       letterSpacing: "0.2em",
                       textTransform: "uppercase",
                       fontWeight: 700,
-                      padding: "6px 12px",
+                      padding: "4px 10px",
                       borderRadius: 2,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     ↑ Trending
@@ -225,12 +230,13 @@ export default async function ProductPage({
                     style={{
                       background: "#8B1A1A",
                       color: "#fff",
-                      fontSize: 10,
+                      fontSize: "clamp(8px, 2vw, 10px)",
                       letterSpacing: "0.16em",
                       textTransform: "uppercase",
                       fontWeight: 700,
-                      padding: "6px 12px",
+                      padding: "4px 10px",
                       borderRadius: 2,
+                      whiteSpace: "nowrap",
                     }}
                   >
                     Sale
@@ -245,16 +251,16 @@ export default async function ProductPage({
               style={{ display: "flex", flexDirection: "column" }}
             >
               {/* Category pill — display only */}
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: "clamp(12px, 3vw, 16px)" }}>
                 <span
                   style={{
                     display: "inline-block",
-                    fontSize: 10,
+                    fontSize: "clamp(8px, 2vw, 10px)",
                     letterSpacing: "0.28em",
                     textTransform: "uppercase",
                     color: "#C4A064",
                     border: "1px solid rgba(196,160,100,0.4)",
-                    padding: "4px 12px",
+                    padding: "4px 10px",
                     borderRadius: 2,
                   }}
                 >
@@ -264,13 +270,13 @@ export default async function ProductPage({
 
               {/* Product name — display only */}
               <h1
-                className="text-3xl sm:text-4xl xl:text-5xl"
+                className="text-2xl sm:text-3xl md:text-4xl xl:text-5xl"
                 style={{
                   fontWeight: 300,
                   lineHeight: 1.12,
                   letterSpacing: "-0.01em",
                   color: "#F5F0E8",
-                  marginBottom: 20,
+                  marginBottom: "clamp(16px, 3vw, 20px)",
                 }}
               >
                 {serializedProduct.name}
@@ -281,8 +287,8 @@ export default async function ProductPage({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 12,
-                  marginBottom: 24,
+                  gap: "clamp(8px, 2vw, 12px)",
+                  marginBottom: "clamp(16px, 3vw, 24px)",
                 }}
               >
                 <div
@@ -317,13 +323,13 @@ export default async function ProductPage({
                 style={{
                   display: "flex",
                   alignItems: "flex-end",
-                  gap: 12,
-                  marginBottom: 32,
+                  gap: "clamp(8px, 2vw, 12px)",
+                  marginBottom: "clamp(24px, 4vw, 32px)",
                   flexWrap: "wrap",
                 }}
               >
                 <span
-                  className="text-4xl sm:text-5xl"
+                  className="text-3xl sm:text-4xl md:text-5xl"
                   style={{
                     fontWeight: 300,
                     color: "#C4A064",
@@ -336,7 +342,7 @@ export default async function ProductPage({
                   <>
                     <span
                       style={{
-                        fontSize: 20,
+                        fontSize: "clamp(14px, 3vw, 20px)",
                         color: "#6A5A4A",
                         textDecoration: "line-through",
                         marginBottom: 4,
@@ -346,14 +352,15 @@ export default async function ProductPage({
                     </span>
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: "clamp(9px, 2vw, 11px)",
                         color: "#e87070",
                         background: "rgba(139,26,26,0.18)",
                         border: "1px solid rgba(139,26,26,0.35)",
-                        padding: "2px 8px",
+                        padding: "3px 8px",
                         borderRadius: 2,
                         marginBottom: 4,
                         letterSpacing: "0.06em",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {discountPercent}% off
@@ -369,11 +376,11 @@ export default async function ProductPage({
               {serializedProduct.stock > 0 && serializedProduct.stock <= 10 && (
                 <div
                   style={{
-                    marginTop: 16,
+                    marginTop: "clamp(12px, 3vw, 16px)",
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
-                    fontSize: 12,
+                    fontSize: "clamp(11px, 2.5vw, 12px)",
                     color: "#C4956A",
                     letterSpacing: "0.04em",
                   }}
@@ -396,12 +403,12 @@ export default async function ProductPage({
               {/* Trust signals — display only */}
               <div
                 style={{
-                  marginTop: 28,
-                  paddingTop: 24,
+                  marginTop: "clamp(20px, 4vw, 28px)",
+                  paddingTop: "clamp(16px, 3vw, 24px)",
                   borderTop: "1px solid rgba(255,255,255,0.07)",
                   display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 12,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(80px, 1fr))",
+                  gap: "clamp(8px, 3vw, 12px)",
                   textAlign: "center",
                 }}
               >
@@ -416,22 +423,24 @@ export default async function ProductPage({
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: 4,
+                      gap: "clamp(3px, 1vw, 4px)",
+                      minWidth: 0,
                     }}
                   >
-                    <span style={{ fontSize: 20 }}>{item.icon}</span>
+                    <span style={{ fontSize: "clamp(16px, 4vw, 20px)" }}>{item.icon}</span>
                     <span
                       style={{
-                        fontSize: 9,
+                        fontSize: "clamp(8px, 2vw, 9px)",
                         letterSpacing: "0.12em",
                         textTransform: "uppercase",
                         color: "rgba(245,240,232,0.8)",
                         fontWeight: 600,
+                        lineHeight: 1.2,
                       }}
                     >
                       {item.label}
                     </span>
-                    <span style={{ fontSize: 10, color: "#6A5A4A" }}>{item.sub}</span>
+                    <span style={{ fontSize: "clamp(8px, 2vw, 10px)", color: "#6A5A4A", lineHeight: 1.2 }}>{item.sub}</span>
                   </div>
                 ))}
               </div>
@@ -441,8 +450,8 @@ export default async function ProductPage({
 
         {/* ════════ SECTION DIVIDER ════════ */}
         <div
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80, marginBottom: 8 }}
+          className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10"
+          style={{ marginTop: "clamp(48px, 8vw, 80px)", marginBottom: 8 }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
@@ -481,23 +490,23 @@ export default async function ProductPage({
 
         {/* ════════ PRODUCT TABS ════════ */}
         <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 48 }}
+          className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10"
+          style={{ marginTop: "clamp(36px, 6vw, 48px)" }}
         >
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: "clamp(20px, 4vw, 28px)" }}>
             <p
               style={{
-                fontSize: 10,
+                fontSize: "clamp(8px, 2vw, 10px)",
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
                 color: "#C4A064",
-                marginBottom: 6,
+                marginBottom: "clamp(4px, 1vw, 6px)",
               }}
             >
               Details
             </p>
             <p
-              className="text-2xl sm:text-3xl"
+              className="text-xl sm:text-2xl md:text-3xl"
               style={{
                 fontWeight: 300,
                 color: "rgba(245,240,232,0.9)",
@@ -513,7 +522,7 @@ export default async function ProductPage({
               border: "1px solid rgba(255,255,255,0.06)",
               borderRadius: 2,
               overflow: "hidden",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
+              boxShadow: "0 4px 20px sm:0 8px 40px rgba(0,0,0,0.4)",
             }}
           >
             <ProductTabs product={serializedProduct} />
@@ -522,23 +531,23 @@ export default async function ProductPage({
 
         {/* ════════ REVIEWS ════════ */}
         <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80 }}
+          className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10"
+          style={{ marginTop: "clamp(48px, 8vw, 80px)" }}
         >
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: "clamp(20px, 4vw, 28px)" }}>
             <p
               style={{
-                fontSize: 10,
+                fontSize: "clamp(8px, 2vw, 10px)",
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
                 color: "#C4A064",
-                marginBottom: 6,
+                marginBottom: "clamp(4px, 1vw, 6px)",
               }}
             >
               Reviews
             </p>
             <p
-              className="text-2xl sm:text-3xl"
+              className="text-xl sm:text-2xl md:text-3xl"
               style={{
                 fontWeight: 300,
                 color: "rgba(245,240,232,0.9)",
@@ -554,7 +563,7 @@ export default async function ProductPage({
               border: "1px solid rgba(255,255,255,0.05)",
               borderRadius: 2,
               overflow: "hidden",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.35)",
+              boxShadow: "0 4px 20px sm:0 8px 40px rgba(0,0,0,0.35)",
             }}
           >
             <ReviewSection productId={product.id} />
@@ -563,17 +572,17 @@ export default async function ProductPage({
 
         {/* ════════ RELATED PRODUCTS ════════ */}
         <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80, marginBottom: 100 }}
+          className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-10"
+          style={{ marginTop: "clamp(48px, 8vw, 80px)", marginBottom: "clamp(60px, 10vw, 100px)" }}
         >
-          <div style={{ marginBottom: 36 }}>
+          <div style={{ marginBottom: "clamp(24px, 4vw, 36px)" }}>
             <p
               style={{
-                fontSize: 10,
+                fontSize: "clamp(8px, 2vw, 10px)",
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
                 color: "#C4A064",
-                marginBottom: 6,
+                marginBottom: "clamp(4px, 1vw, 6px)",
               }}
             >
               Discover More
@@ -582,12 +591,12 @@ export default async function ProductPage({
               style={{
                 display: "flex",
                 alignItems: "flex-end",
-                gap: 16,
+                gap: "clamp(12px, 3vw, 16px)",
                 flexWrap: "wrap",
               }}
             >
               <p
-                className="text-2xl sm:text-3xl"
+                className="text-xl sm:text-2xl md:text-3xl"
                 style={{
                   fontWeight: 300,
                   color: "rgba(245,240,232,0.9)",
