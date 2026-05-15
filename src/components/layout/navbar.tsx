@@ -318,16 +318,16 @@ export function Navbar() {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
+            <div className="hidden md:flex items-center gap-8 ml-10">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
                   onMouseEnter={() => setActiveHover(item.name)}
                   onMouseLeave={() => setActiveHover(null)}
-                  className="nav-item text-sm"
+                  className="nav-item text-sm whitespace-nowrap flex items-center"
                 >
-                  <span className="text-lg mr-2">{item.icon}</span>
+                  <span className="text-base mr-1">{item.icon}</span>
                   {item.name}
                 </Link>
               ))}
