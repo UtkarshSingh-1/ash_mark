@@ -186,13 +186,7 @@ export default async function ProductPage({
               </div>
 
               {/* Product Info Component */}
-              <div className="[&_button]:rounded-[2px] [&_select]:rounded-[2px] [&_input]:rounded-[2px]
-                [&_button[type='submit']]:bg-[#C4A064] [&_button[type='submit']]:text-[#0A0A0A]
-                [&_button[type='submit']]:tracking-[0.14em] [&_button[type='submit']]:uppercase
-                [&_button[type='submit']]:text-xs [&_button[type='submit']]:font-semibold
-                [&_button[type='submit']]:transition-all [&_button[type='submit']]:duration-200
-                [&_button[type='submit']]:hover:bg-[#D4B074] [&_button[type='submit']]:shadow-[0_4px_24px_rgba(196,160,100,0.3)]
-                [&_button[type='submit']]:hover:shadow-[0_6px_32px_rgba(196,160,100,0.45)]">
+              <div className="product-info-wrapper">
                 <ProductInfo product={serializedProduct} />
               </div>
 
@@ -318,6 +312,11 @@ export default async function ProductPage({
 
         /* Override common Tailwind reset conflicts */
         .min-h-screen { min-height: 100svh; }
+
+        /* ProductInfo button/input overrides (safe CSS — avoids Tailwind attribute-selector parse errors) */
+        .product-info-wrapper button { border-radius: 2px; }
+        .product-info-wrapper select { border-radius: 2px; }
+        .product-info-wrapper input  { border-radius: 2px; }
       `}</style>
     </div>
   )
