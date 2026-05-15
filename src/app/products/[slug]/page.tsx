@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
@@ -9,9 +12,606 @@ import { ReviewSection } from "@/components/product/review-section"
 import { prisma } from "@/lib/db"
 import { jsonToStringArray } from "@/lib/utils"
 
-// ⬇️ Prevent build-time DB calls
 export const dynamic = "force-dynamic"
 
+/* ─────────────────────────────────────────────
+   THEME TOGGLE BUTTON  (client island)
+───────────────────────────────────────────── */
+function ThemeToggle({ theme, onToggle }: { theme: "dark" | "light"; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label="Toggle colour theme"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 14px",
+        borderRadius: 999,
+        border: theme === "dark"
+          ? "1px solid rgba(196,160,100,0.35)"
+          : "1px solid rgba(139,110,60,0.35)",
+        background: theme === "dark"
+          ? "rgba(196,160,100,0.08)"
+          : "rgba(139,110,60,0.08)",
+        cursor: "pointer",
+        transition: "all 0.3s ease",
+        flexShrink: 0,
+      }}
+    >
+      {/* Track */}
+      <span style={{
+        position: "relative",
+        width: 36,
+        height: 20,
+        borderRadius: 999,
+        background: theme === "dark" ? "#1a1a1a" : "#e8dcc8",
+        border: "1px solid rgba(196,160,100,0.3)",
+        display: "inline-block",
+        transition: "background 0.3s",
+      }}>
+        {/* Knob */}
+        <span style={{
+          position: "absolute",
+          top: 2,
+          left: theme === "dark" ? 2 : 18,
+          width: 14,
+          height: 14,
+          borderRadius: "50%",
+          background: "#C4A064",
+          transition: "left 0.25s cubic-bezier(.34,1.56,.64,1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 8,
+        }}>
+          {theme === "dark" ? "◑" : "○"}
+        </span>
+      </span>
+      <span style={{
+        fontSize: 10,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        fontWeight: 700,
+        color: "#C4A064",
+        fontFamily: "Georgia, serif",
+      }}>
+        {theme === "dark" ? "Dark" : "Light"}
+      </span>
+    </button>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   THEME-AWARE PRODUCT PAGE WRAPPER
+───────────────────────────────────────────── */
+function ProductPageContent({ product: p, discountPercent, images, rawProductId, categoryId }: {
+  product: any
+  discountPercent: number | null
+  images: string[]
+  rawProductId: string
+  categoryId: string
+}) {
+  const [theme, setTheme] = useState<"dark" | "light">("dark")
+
+  const dk = theme === "dark"
+
+  const vars = {
+    bg:        dk ? "#0A0A0A"            : "#FAF7F2",
+    bgCard:    dk ? "#111111"            : "#FFFFFF",
+    bgCard2:   dk ? "#0F0F0F"           : "#F5F0E8",
+    text:      dk ? "#F5F0E8"            : "#1A1208",
+    textMuted: dk ? "#8A7A6A"            : "#7A6A58",
+    textSub:   dk ? "rgba(245,240,232,0.55)" : "rgba(26,18,8,0.45)",
+    gold:      "#C4A064",
+    goldDim:   dk ? "rgba(196,160,100,0.4)"  : "rgba(139,110,60,0.5)",
+    border:    dk ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+    borderGold:dk ? "rgba(196,160,100,0.3)"  : "rgba(139,110,60,0.3)",
+    shadow:    dk ? "0 32px 80px rgba(0,0,0,0.6)" : "0 24px 60px rgba(0,0,0,0.12)",
+    navBg:     dk ? "rgba(10,10,10,0.92)"    : "rgba(250,247,242,0.92)",
+    glow:      dk
+      ? "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.15) 0%, transparent 70%)"
+      : "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.10) 0%, transparent 70%)",
+  }
+
+  return (
+    <div
+      data-theme={theme}
+      style={{
+        minHeight: "100vh",
+        background: vars.bg,
+        color: vars.text,
+        fontFamily: "Georgia, 'Times New Roman', serif",
+        transition: "background 0.4s ease, color 0.4s ease",
+      }}
+    >
+      {/* Inline responsive + animation CSS */}
+      <style>{`
+        @keyframes pd-fade-up {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pd-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes pd-slide-left {
+          from { opacity: 0; transform: translateX(-20px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pd-slide-right {
+          from { opacity: 0; transform: translateX(20px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pd-pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.5; transform: scale(0.7); }
+        }
+
+        .pd-page        { animation: pd-fade-in   0.45s ease both; }
+        .pd-img-col     { animation: pd-slide-left  0.55s cubic-bezier(.22,1,.36,1) 0.1s both; }
+        .pd-info-col    { animation: pd-slide-right 0.55s cubic-bezier(.22,1,.36,1) 0.15s both; }
+        .pd-breadcrumb  { animation: pd-fade-up   0.4s ease 0.05s both; }
+        .pd-tabs-wrap   { animation: pd-fade-up   0.5s ease 0.2s both; }
+        .pd-reviews-wrap{ animation: pd-fade-up   0.5s ease 0.25s both; }
+        .pd-related-wrap{ animation: pd-fade-up   0.5s ease 0.3s both; }
+        .pd-pulse       { animation: pd-pulse-dot 2s ease-in-out infinite; }
+
+        /* ── Responsive hero grid ── */
+        .pd-hero-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 28px;
+        }
+        @media (min-width: 1024px) {
+          .pd-hero-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 56px;
+            align-items: start;
+          }
+        }
+        @media (min-width: 1280px) {
+          .pd-hero-grid { gap: 80px; }
+        }
+
+        /* ── Trust signals: 3 cols on ≥ sm, compress on xs ── */
+        .pd-trust-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          text-align: center;
+        }
+        @media (max-width: 380px) {
+          .pd-trust-grid {
+            grid-template-columns: 1fr;
+            text-align: left;
+          }
+          .pd-trust-item { flex-direction: row !important; gap: 10px !important; }
+        }
+
+        /* ── Pricing: wrap on very small screens ── */
+        .pd-price-row {
+          display: flex;
+          align-items: flex-end;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        /* ── Badges: stack on < sm ── */
+        .pd-badges {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          z-index: 20;
+        }
+        @media (max-width: 639px) {
+          .pd-badges { top: 8px; left: 8px; }
+        }
+
+        /* ── Corner deco: only on large ── */
+        .pd-corner-tl, .pd-corner-br { display: none; }
+        @media (min-width: 1024px) {
+          .pd-corner-tl, .pd-corner-br { display: block; }
+        }
+
+        /* ── Sticky info on desktop ── */
+        @media (min-width: 1024px) {
+          .pd-info-sticky { position: sticky; top: 96px; }
+        }
+
+        /* ── Breadcrumb truncation ── */
+        .pd-crumb-name {
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        @media (min-width: 480px) { .pd-crumb-name { max-width: 200px; } }
+        @media (min-width: 768px) { .pd-crumb-name { max-width: 320px; } }
+
+        /* ── Section heading sizes ── */
+        .pd-section-h {
+          font-size: clamp(22px, 5vw, 30px);
+          font-weight: 300;
+          letter-spacing: -0.01em;
+        }
+
+        /* ── Product title ── */
+        .pd-product-title {
+          font-size: clamp(26px, 6vw, 48px);
+          font-weight: 300;
+          line-height: 1.12;
+          letter-spacing: -0.01em;
+        }
+
+        /* ── Product price ── */
+        .pd-price-main {
+          font-size: clamp(30px, 7vw, 48px);
+          font-weight: 300;
+          letter-spacing: -0.02em;
+        }
+
+        /* ── Outer page padding ── */
+        .pd-outer {
+          max-width: 1280px;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        @media (min-width: 640px) {
+          .pd-outer { padding-left: 24px; padding-right: 24px; }
+        }
+        @media (min-width: 1024px) {
+          .pd-outer { padding-left: 40px; padding-right: 40px; }
+        }
+
+        /* ── Theme toggle bar (above Navbar) ── */
+        .pd-theme-bar {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          padding: 8px 16px;
+          border-bottom: 1px solid;
+          position: sticky;
+          top: 0;
+          z-index: 60;
+          transition: background 0.4s, border-color 0.4s;
+        }
+        @media (min-width: 640px) { .pd-theme-bar { padding: 8px 24px; } }
+        @media (min-width: 1024px){ .pd-theme-bar { padding: 8px 40px; } }
+      `}</style>
+
+      {/* ── THEME BAR ── */}
+      <div
+        className="pd-theme-bar"
+        style={{
+          background: vars.navBg,
+          borderColor: vars.border,
+          backdropFilter: "blur(16px)",
+        }}
+      >
+        <ThemeToggle theme={theme} onToggle={() => setTheme(dk ? "light" : "dark")} />
+      </div>
+
+      {/* ── AMBIENT GLOW ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          pointerEvents: "none",
+          position: "fixed",
+          top: 0, left: 0, right: 0,
+          height: 420,
+          zIndex: 0,
+          background: vars.glow,
+          transition: "background 0.4s",
+        }}
+      />
+
+      <Navbar />
+
+      <main className="pd-page" style={{ position: "relative", zIndex: 10 }}>
+
+        {/* ════════ HERO ════════ */}
+        <section className="pd-outer" style={{ paddingTop: 20 }}>
+
+          {/* Breadcrumb */}
+          <nav
+            className="pd-breadcrumb"
+            aria-label="Breadcrumb"
+            style={{
+              marginBottom: 20,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: vars.textMuted,
+            }}
+          >
+            <span>Home</span>
+            <span style={{ opacity: 0.4 }}>╱</span>
+            <span>{p.category.name}</span>
+            <span style={{ opacity: 0.4 }}>╱</span>
+            <span className="pd-crumb-name" style={{ color: vars.textSub }}>{p.name}</span>
+          </nav>
+
+          {/* Two-column hero grid */}
+          <div className="pd-hero-grid">
+
+            {/* LEFT — Images */}
+            <div className="pd-img-col" style={{ position: "relative" }}>
+              {/* Corner decorations */}
+              <div
+                className="pd-corner-tl"
+                aria-hidden="true"
+                style={{
+                  position: "absolute", top: -14, left: -14,
+                  width: 52, height: 52,
+                  borderTop: `1px solid ${vars.borderGold}`,
+                  borderLeft: `1px solid ${vars.borderGold}`,
+                  pointerEvents: "none", zIndex: 10,
+                  transition: "border-color 0.4s",
+                }}
+              />
+              <div
+                className="pd-corner-br"
+                aria-hidden="true"
+                style={{
+                  position: "absolute", bottom: -14, right: -14,
+                  width: 52, height: 52,
+                  borderBottom: `1px solid ${vars.borderGold}`,
+                  borderRight: `1px solid ${vars.borderGold}`,
+                  pointerEvents: "none", zIndex: 10,
+                  transition: "border-color 0.4s",
+                }}
+              />
+
+              <div style={{
+                borderRadius: 4,
+                overflow: "hidden",
+                boxShadow: vars.shadow,
+                border: `1px solid ${vars.border}`,
+                transition: "box-shadow 0.4s, border-color 0.4s",
+              }}>
+                <ProductImages images={images} name={p.name} />
+              </div>
+
+              {/* Badges */}
+              <div className="pd-badges">
+                {p.featured && (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    background: vars.gold, color: "#0A0A0A",
+                    fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase",
+                    fontWeight: 700, padding: "5px 10px", borderRadius: 2,
+                  }}>★ Featured</span>
+                )}
+                {p.trending && (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    background: dk ? "#1A1A1A" : "#F5EDD8",
+                    border: `1px solid ${vars.borderGold}`,
+                    color: vars.gold,
+                    fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase",
+                    fontWeight: 700, padding: "5px 10px", borderRadius: 2,
+                    transition: "background 0.4s, border-color 0.4s",
+                  }}>↑ Trending</span>
+                )}
+                {p.comparePrice && (
+                  <span style={{
+                    background: "#8B1A1A", color: "#fff",
+                    fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase",
+                    fontWeight: 700, padding: "5px 10px", borderRadius: 2,
+                  }}>Sale</span>
+                )}
+              </div>
+            </div>
+
+            {/* RIGHT — Info */}
+            <div className="pd-info-col pd-info-sticky" style={{ display: "flex", flexDirection: "column" }}>
+
+              {/* Category pill */}
+              <div style={{ marginBottom: 14 }}>
+                <span style={{
+                  display: "inline-block",
+                  fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase",
+                  color: vars.gold,
+                  border: `1px solid ${vars.borderGold}`,
+                  padding: "4px 12px", borderRadius: 2,
+                  transition: "border-color 0.4s, color 0.4s",
+                }}>
+                  {p.category.name}
+                </span>
+              </div>
+
+              {/* Product name */}
+              <h1 className="pd-product-title" style={{ color: vars.text, marginBottom: 18, transition: "color 0.4s" }}>
+                {p.name}
+              </h1>
+
+              {/* Gold divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
+                <div style={{ flex: 1, height: 1, background: `linear-gradient(to right, ${vars.goldDim}, transparent)`, transition: "background 0.4s" }} />
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: vars.goldDim, flexShrink: 0, transition: "background 0.4s" }} />
+                <div style={{ flex: 1, height: 1, background: `linear-gradient(to left, ${vars.goldDim}, transparent)`, transition: "background 0.4s" }} />
+              </div>
+
+              {/* Pricing */}
+              <div className="pd-price-row" style={{ marginBottom: 28 }}>
+                <span className="pd-price-main" style={{ color: vars.gold, transition: "color 0.4s" }}>
+                  ₹{p.price.toLocaleString("en-IN")}
+                </span>
+                {p.comparePrice && (
+                  <>
+                    <span style={{ fontSize: 18, color: vars.textMuted, textDecoration: "line-through", marginBottom: 2, transition: "color 0.4s" }}>
+                      ₹{p.comparePrice.toLocaleString("en-IN")}
+                    </span>
+                    <span style={{
+                      fontSize: 10, color: "#e87070",
+                      background: "rgba(139,26,26,0.18)",
+                      border: "1px solid rgba(139,26,26,0.35)",
+                      padding: "2px 8px", borderRadius: 2,
+                      letterSpacing: "0.06em", marginBottom: 2,
+                    }}>
+                      {discountPercent}% off
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* ProductInfo — untouched */}
+              <ProductInfo product={p} />
+
+              {/* Low stock */}
+              {p.stock > 0 && p.stock <= 10 && (
+                <div style={{
+                  marginTop: 14,
+                  display: "flex", alignItems: "center", gap: 8,
+                  fontSize: 12, color: "#C4956A", letterSpacing: "0.04em",
+                }}>
+                  <span className="pd-pulse" style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: "#C4956A", flexShrink: 0, display: "inline-block",
+                  }} />
+                  Only {p.stock} left in stock
+                </div>
+              )}
+
+              {/* Trust signals */}
+              <div style={{
+                marginTop: 24,
+                paddingTop: 20,
+                borderTop: `1px solid ${vars.border}`,
+                transition: "border-color 0.4s",
+              }}>
+                <div className="pd-trust-grid">
+                  {[
+                    { icon: "🚚", label: "Free Delivery", sub: "Orders over ₹999" },
+                    { icon: "↩", label: "Easy Returns",  sub: "Within 30 days" },
+                    { icon: "✦", label: "Authentic",     sub: "100% genuine" },
+                  ].map((item) => (
+                    <div key={item.label} className="pd-trust-item" style={{
+                      display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                    }}>
+                      <span style={{ fontSize: 18 }}>{item.icon}</span>
+                      <span style={{
+                        fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase",
+                        color: vars.text, fontWeight: 600, transition: "color 0.4s",
+                      }}>{item.label}</span>
+                      <span style={{ fontSize: 10, color: vars.textMuted, transition: "color 0.4s" }}>{item.sub}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Section divider ── */}
+        <SectionDivider vars={vars} />
+
+        {/* ════════ PRODUCT TABS ════════ */}
+        <section className="pd-tabs-wrap pd-outer" style={{ marginTop: 40, marginBottom: 0 }}>
+          <SectionLabel label="Details" heading="Product Information" vars={vars} />
+          <div style={{
+            background: vars.bgCard,
+            border: `1px solid ${vars.border}`,
+            borderRadius: 4, overflow: "hidden",
+            boxShadow: dk ? "0 8px 40px rgba(0,0,0,0.4)" : "0 4px 24px rgba(0,0,0,0.07)",
+            transition: "background 0.4s, border-color 0.4s, box-shadow 0.4s",
+          }}>
+            <ProductTabs product={p} />
+          </div>
+        </section>
+
+        {/* ════════ REVIEWS ════════ */}
+        <section className="pd-reviews-wrap pd-outer" style={{ marginTop: 72 }}>
+          <SectionLabel label="Reviews" heading="What Our Customers Say" vars={vars} />
+          <div style={{
+            background: vars.bgCard2,
+            border: `1px solid ${vars.border}`,
+            borderRadius: 4, overflow: "hidden",
+            boxShadow: dk ? "0 8px 40px rgba(0,0,0,0.35)" : "0 4px 20px rgba(0,0,0,0.06)",
+            transition: "background 0.4s, border-color 0.4s, box-shadow 0.4s",
+          }}>
+            <ReviewSection productId={rawProductId} />
+          </div>
+        </section>
+
+        {/* ════════ RELATED PRODUCTS ════════ */}
+        <section className="pd-related-wrap pd-outer" style={{ marginTop: 72, marginBottom: 80 }}>
+          <div style={{ marginBottom: 32 }}>
+            <p style={{
+              fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase",
+              color: vars.gold, marginBottom: 6, transition: "color 0.4s",
+            }}>Discover More</p>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+              <p className="pd-section-h" style={{ color: `${vars.text}e6`, transition: "color 0.4s" }}>
+                You May Also Like
+              </p>
+              <div style={{
+                flex: 1, minWidth: 40, maxWidth: 180, height: 1, alignSelf: "center",
+                background: `linear-gradient(to right, ${vars.goldDim}, transparent)`,
+                transition: "background 0.4s",
+              }} />
+            </div>
+          </div>
+          <RelatedProducts categoryId={categoryId} currentProductId={rawProductId} />
+        </section>
+
+      </main>
+
+      <Footer />
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   SMALL SHARED COMPONENTS
+───────────────────────────────────────────── */
+function SectionDivider({ vars }: { vars: any }) {
+  return (
+    <div className="pd-outer" style={{ marginTop: 64, marginBottom: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ flex: 1, height: 1, background: vars.border, transition: "background 0.4s" }} />
+        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+          {[4, 6, 4].map((s, i) => (
+            <span key={i} style={{
+              width: s, height: s, borderRadius: "50%",
+              background: vars.goldDim, display: "inline-block",
+              transition: "background 0.4s",
+            }} />
+          ))}
+        </div>
+        <div style={{ flex: 1, height: 1, background: vars.border, transition: "background 0.4s" }} />
+      </div>
+    </div>
+  )
+}
+
+function SectionLabel({ label, heading, vars }: { label: string; heading: string; vars: any }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <p style={{
+        fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase",
+        color: vars.gold, marginBottom: 6, transition: "color 0.4s",
+      }}>{label}</p>
+      <p className="pd-section-h" style={{ color: `${vars.text}e6`, transition: "color 0.4s" }}>
+        {heading}
+      </p>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   SERVER COMPONENT SHELL  (data fetching)
+───────────────────────────────────────────── */
 export default async function ProductPage({
   params,
 }: {
@@ -21,604 +621,47 @@ export default async function ProductPage({
 
   const product = await prisma.product.findUnique({
     where: { slug },
-    include: {
-      category: true,
-    },
+    include: { category: true },
   })
 
-  if (!product) {
-    return notFound()
-  }
+  if (!product) return notFound()
 
-  // Extract arrays
-  const images = jsonToStringArray(product.images)
-  const sizes = jsonToStringArray(product.sizes) as string[]
-  const colors = jsonToStringArray(product.colors) as string[]
+  const images      = jsonToStringArray(product.images)
+  const sizes       = jsonToStringArray(product.sizes) as string[]
+  const colors      = jsonToStringArray(product.colors) as string[]
   const storyImages = jsonToStringArray(product.storyImages) as string[]
 
-  // Serialized product (avoid Prisma Decimals)
   const serializedProduct = {
     id: product.id,
     name: product.name,
     description: product.description,
     price: Number(product.price),
     comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
-    sizes,
-    colors,
+    sizes, colors,
     stock: product.stock,
     featured: product.featured,
     trending: product.trending,
-    category: {
-      name: product.category.name,
-    },
+    category: { name: product.category.name },
     storyContent: product.storyContent,
     storyTitle: product.storyTitle,
     storyImage: storyImages[0] ?? images[0],
     storyImages,
   }
 
-  const discountPercent =
-    serializedProduct.comparePrice
-      ? Math.round(
-          ((serializedProduct.comparePrice - serializedProduct.price) /
-            serializedProduct.comparePrice) *
-            100
-        )
-      : null
+  const discountPercent = serializedProduct.comparePrice
+    ? Math.round(
+        ((serializedProduct.comparePrice - serializedProduct.price) /
+          serializedProduct.comparePrice) * 100
+      )
+    : null
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: "#0A0A0A",
-        color: "#F5F0E8",
-        fontFamily: "Georgia, 'Times New Roman', serif",
-      }}
-    >
-      {/* Ambient top glow — purely decorative */}
-      <div
-        aria-hidden="true"
-        style={{
-          pointerEvents: "none",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 420,
-          zIndex: 0,
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(196,160,100,0.15) 0%, transparent 70%)",
-        }}
-      />
-
-      <Navbar />
-
-      <main style={{ position: "relative", zIndex: 10 }}>
-
-        {/* ════════ HERO SECTION ════════ */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 md:pt-10">
-
-          {/* Breadcrumb — display only */}
-          <nav
-            aria-label="Breadcrumb"
-            className="mb-6 flex flex-wrap items-center gap-2"
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "#8A7A6A",
-            }}
-          >
-            <span>Home</span>
-            <span style={{ opacity: 0.4 }}>╱</span>
-            <span>{serializedProduct.category.name}</span>
-            <span style={{ opacity: 0.4 }}>╱</span>
-            <span
-              className="truncate max-w-[160px] sm:max-w-xs"
-              style={{ color: "#F5F0E8", opacity: 0.55 }}
-            >
-              {serializedProduct.name}
-            </span>
-          </nav>
-
-          {/* Two-column layout */}
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 xl:gap-20 items-start">
-
-            {/* LEFT — Images */}
-            <div style={{ position: "relative" }}>
-              {/* Decorative corner lines — no interaction */}
-              <div
-                aria-hidden="true"
-                className="hidden lg:block"
-                style={{
-                  position: "absolute",
-                  top: -14,
-                  left: -14,
-                  width: 52,
-                  height: 52,
-                  borderTop: "1px solid rgba(196,160,100,0.3)",
-                  borderLeft: "1px solid rgba(196,160,100,0.3)",
-                  pointerEvents: "none",
-                  zIndex: 10,
-                }}
-              />
-              <div
-                aria-hidden="true"
-                className="hidden lg:block"
-                style={{
-                  position: "absolute",
-                  bottom: -14,
-                  right: -14,
-                  width: 52,
-                  height: 52,
-                  borderBottom: "1px solid rgba(196,160,100,0.3)",
-                  borderRight: "1px solid rgba(196,160,100,0.3)",
-                  pointerEvents: "none",
-                  zIndex: 10,
-                }}
-              />
-
-              <div
-                style={{
-                  borderRadius: 2,
-                  overflow: "hidden",
-                  boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                }}
-              >
-                <ProductImages images={images} name={serializedProduct.name} />
-              </div>
-
-              {/* Floating badges — display only */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 16,
-                  left: 16,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  zIndex: 20,
-                }}
-              >
-                {serializedProduct.featured && (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "#C4A064",
-                      color: "#0A0A0A",
-                      fontSize: 10,
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      fontWeight: 700,
-                      padding: "6px 12px",
-                      borderRadius: 2,
-                    }}
-                  >
-                    ★ Featured
-                  </span>
-                )}
-                {serializedProduct.trending && (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: "#1A1A1A",
-                      border: "1px solid rgba(196,160,100,0.5)",
-                      color: "#C4A064",
-                      fontSize: 10,
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      fontWeight: 700,
-                      padding: "6px 12px",
-                      borderRadius: 2,
-                    }}
-                  >
-                    ↑ Trending
-                  </span>
-                )}
-                {serializedProduct.comparePrice && (
-                  <span
-                    style={{
-                      background: "#8B1A1A",
-                      color: "#fff",
-                      fontSize: 10,
-                      letterSpacing: "0.16em",
-                      textTransform: "uppercase",
-                      fontWeight: 700,
-                      padding: "6px 12px",
-                      borderRadius: 2,
-                    }}
-                  >
-                    Sale
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT — Info */}
-            <div
-              className="lg:sticky lg:top-24"
-              style={{ display: "flex", flexDirection: "column" }}
-            >
-              {/* Category pill — display only */}
-              <div style={{ marginBottom: 16 }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    fontSize: 10,
-                    letterSpacing: "0.28em",
-                    textTransform: "uppercase",
-                    color: "#C4A064",
-                    border: "1px solid rgba(196,160,100,0.4)",
-                    padding: "4px 12px",
-                    borderRadius: 2,
-                  }}
-                >
-                  {serializedProduct.category.name}
-                </span>
-              </div>
-
-              {/* Product name — display only */}
-              <h1
-                className="text-3xl sm:text-4xl xl:text-5xl"
-                style={{
-                  fontWeight: 300,
-                  lineHeight: 1.12,
-                  letterSpacing: "-0.01em",
-                  color: "#F5F0E8",
-                  marginBottom: 20,
-                }}
-              >
-                {serializedProduct.name}
-              </h1>
-
-              {/* Gold divider — display only */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginBottom: 24,
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background:
-                      "linear-gradient(to right, rgba(196,160,100,0.6), transparent)",
-                  }}
-                />
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: "rgba(196,160,100,0.5)",
-                    flexShrink: 0,
-                  }}
-                />
-                <div
-                  style={{
-                    flex: 1,
-                    height: 1,
-                    background:
-                      "linear-gradient(to left, rgba(196,160,100,0.6), transparent)",
-                  }}
-                />
-              </div>
-
-              {/* Pricing — display only */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: 12,
-                  marginBottom: 32,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
-                  className="text-4xl sm:text-5xl"
-                  style={{
-                    fontWeight: 300,
-                    color: "#C4A064",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  ₹{serializedProduct.price.toLocaleString("en-IN")}
-                </span>
-                {serializedProduct.comparePrice && (
-                  <>
-                    <span
-                      style={{
-                        fontSize: 20,
-                        color: "#6A5A4A",
-                        textDecoration: "line-through",
-                        marginBottom: 4,
-                      }}
-                    >
-                      ₹{serializedProduct.comparePrice.toLocaleString("en-IN")}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: "#e87070",
-                        background: "rgba(139,26,26,0.18)",
-                        border: "1px solid rgba(139,26,26,0.35)",
-                        padding: "2px 8px",
-                        borderRadius: 2,
-                        marginBottom: 4,
-                        letterSpacing: "0.06em",
-                      }}
-                    >
-                      {discountPercent}% off
-                    </span>
-                  </>
-                )}
-              </div>
-
-              {/* ── ProductInfo: completely untouched, no wrapper overrides ── */}
-              <ProductInfo product={serializedProduct} />
-
-              {/* Low-stock indicator — display only */}
-              {serializedProduct.stock > 0 && serializedProduct.stock <= 10 && (
-                <div
-                  style={{
-                    marginTop: 16,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    fontSize: 12,
-                    color: "#C4956A",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  <span
-                    className="animate-pulse"
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "#C4956A",
-                      flexShrink: 0,
-                      display: "inline-block",
-                    }}
-                  />
-                  Only {serializedProduct.stock} left in stock
-                </div>
-              )}
-
-              {/* Trust signals — display only */}
-              <div
-                style={{
-                  marginTop: 28,
-                  paddingTop: 24,
-                  borderTop: "1px solid rgba(255,255,255,0.07)",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 12,
-                  textAlign: "center",
-                }}
-              >
-                {[
-                  { icon: "🚚", label: "Free Delivery", sub: "Orders over ₹999" },
-                  { icon: "↩", label: "Easy Returns", sub: "Within 30 days" },
-                  { icon: "✦", label: "Authentic", sub: "100% genuine" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <span style={{ fontSize: 20 }}>{item.icon}</span>
-                    <span
-                      style={{
-                        fontSize: 9,
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        color: "rgba(245,240,232,0.8)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                    <span style={{ fontSize: 10, color: "#6A5A4A" }}>{item.sub}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ════════ SECTION DIVIDER ════════ */}
-        <div
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80, marginBottom: 8 }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <span
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: "50%",
-                  background: "rgba(196,160,100,0.35)",
-                  display: "inline-block",
-                }}
-              />
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "rgba(196,160,100,0.35)",
-                  display: "inline-block",
-                }}
-              />
-              <span
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: "50%",
-                  background: "rgba(196,160,100,0.35)",
-                  display: "inline-block",
-                }}
-              />
-            </div>
-            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-          </div>
-        </div>
-
-        {/* ════════ PRODUCT TABS ════════ */}
-        <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 48 }}
-        >
-          <div style={{ marginBottom: 28 }}>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: "#C4A064",
-                marginBottom: 6,
-              }}
-            >
-              Details
-            </p>
-            <p
-              className="text-2xl sm:text-3xl"
-              style={{
-                fontWeight: 300,
-                color: "rgba(245,240,232,0.9)",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Product Information
-            </p>
-          </div>
-          <div
-            style={{
-              background: "#111111",
-              border: "1px solid rgba(255,255,255,0.06)",
-              borderRadius: 2,
-              overflow: "hidden",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.4)",
-            }}
-          >
-            <ProductTabs product={serializedProduct} />
-          </div>
-        </section>
-
-        {/* ════════ REVIEWS ════════ */}
-        <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80 }}
-        >
-          <div style={{ marginBottom: 28 }}>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: "#C4A064",
-                marginBottom: 6,
-              }}
-            >
-              Reviews
-            </p>
-            <p
-              className="text-2xl sm:text-3xl"
-              style={{
-                fontWeight: 300,
-                color: "rgba(245,240,232,0.9)",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              What Our Customers Say
-            </p>
-          </div>
-          <div
-            style={{
-              background: "#0F0F0F",
-              border: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: 2,
-              overflow: "hidden",
-              boxShadow: "0 8px 40px rgba(0,0,0,0.35)",
-            }}
-          >
-            <ReviewSection productId={product.id} />
-          </div>
-        </section>
-
-        {/* ════════ RELATED PRODUCTS ════════ */}
-        <section
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10"
-          style={{ marginTop: 80, marginBottom: 100 }}
-        >
-          <div style={{ marginBottom: 36 }}>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: "0.3em",
-                textTransform: "uppercase",
-                color: "#C4A064",
-                marginBottom: 6,
-              }}
-            >
-              Discover More
-            </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-end",
-                gap: 16,
-                flexWrap: "wrap",
-              }}
-            >
-              <p
-                className="text-2xl sm:text-3xl"
-                style={{
-                  fontWeight: 300,
-                  color: "rgba(245,240,232,0.9)",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                You May Also Like
-              </p>
-              <div
-                style={{
-                  flex: 1,
-                  minWidth: 40,
-                  maxWidth: 200,
-                  height: 1,
-                  background:
-                    "linear-gradient(to right, rgba(196,160,100,0.4), transparent)",
-                  alignSelf: "center",
-                }}
-              />
-            </div>
-          </div>
-
-          <RelatedProducts
-            categoryId={product.categoryId}
-            currentProductId={product.id}
-          />
-        </section>
-
-      </main>
-
-      <Footer />
-    </div>
+    <ProductPageContent
+      product={serializedProduct}
+      discountPercent={discountPercent}
+      images={images}
+      rawProductId={product.id}
+      categoryId={product.categoryId}
+    />
   )
 }
