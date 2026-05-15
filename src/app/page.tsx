@@ -96,11 +96,11 @@ export default function AshMark() {
   }, [menuOpen]);
 
   const products = [
-    { n: "01", slug: "crane",        name: "The Golden", ital: "Crane",        detail: "Silk thread on organic cotton",        price: "₹8,400",  stock: "12 LEFT", img: "product1.webp", alt: "The Golden Crane Embroidered Shirt" },
-    { n: "02", slug: "bloom",        name: "Midnight",   ital: "Bloom",        detail: "Hand-stitched florals, charcoal cotton", price: "₹9,200",  stock: "23 LEFT", img: "product2.webp", alt: "Midnight Bloom Shirt" },
-    { n: "03", slug: "cartographer", name: "The",        ital: "Cartographer", detail: "Map-line embroidery, ivory linen",      price: "₹10,600", stock: "07 LEFT", img: "product3.webp", alt: "The Cartographer Shirt" },
-    { n: "04", slug: "verse",        name: "Olive",      ital: "Verse",        detail: "Olive thread poetry, sand cotton",     price: "₹7,800",  stock: "31 LEFT", img: "product4.webp", alt: "Olive Verse Shirt" },
-    { n: "05", slug: "horizon",      name: "Rust",       ital: "Horizon",      detail: "Sun-rust gradient stitching",          price: "₹8,900",  stock: "18 LEFT", img: "product5.webp", alt: "Rust Horizon Shirt" },
+    { n: "01", slug: "crane",        name: "The Chronicle of", ital: "FUTURE",        detail: "Silk thread on organic cotton",        price: "₹1,499",  stock: "12 LEFT", img: "product1.webp", alt: "The Golden Crane Embroidered Shirt" },
+    { n: "02", slug: "bloom",        name: "Thought behind",   ital: "FALLING BLOOM",        detail: "Hand-stitched florals, charcoal cotton", price: "₹1,399",  stock: "23 LEFT", img: "product2.webp", alt: "Midnight Bloom Shirt" },
+    { n: "03", slug: "cartographer", name: "The Tale of",        ital: "Dominant Female", detail: "Map-line embroidery, ivory linen",      price: "₹10,600", stock: "07 LEFT", img: "product3.webp", alt: "The Cartographer Shirt" },
+    { n: "04", slug: "verse",        name: "The Narrative of",      ital: "WRATH",        detail: "Olive thread poetry, sand cotton",     price: "₹7,800",  stock: "31 LEFT", img: "product4.webp", alt: "Olive Verse Shirt" },
+    { n: "05", slug: "horizon",       name: "The Tale of",        ital: "Dominant Male",      detail: "Sun-rust gradient stitching",          price: "₹8,900",  stock: "18 LEFT", img: "product5.webp", alt: "Rust Horizon Shirt" },
   ];
 
   const dropItems = [
@@ -113,7 +113,7 @@ export default function AshMark() {
 
   const processRows = [
     { n: "01", title: "Selection",  desc: "We source organic cotton from small farms in Gujarat. Each meter is hand-inspected for weave consistency and softness. Only one in three meters meets our standard.", meta: <>02 WEEKS<br />GUJARAT</> },
-    { n: "02", title: "Embroidery", desc: "Master artisans hand-stitch each design over 60–80 hours. Silk and cotton threads are dyed in small batches using traditional methods. No two pieces are identical.", meta: <>06 WEEKS<br />JAIPUR</> },
+    { n: "02", title: "Embroidery", desc: "Master artisans hand-stitch each design over 60–80 hours. Silk and cotton threads are dyed in small batches using traditional methods. No two pieces are identical.", meta: <>06 WEEKS<br /></> },
     { n: "03", title: "Finishing",  desc: "Each garment is hand-washed in soft water, sun-dried, and pressed. We sign the inside hem with the artisan's name and the date the piece was completed.", meta: <>02 WEEKS<br />STUDIO</> },
   ];
 
@@ -220,7 +220,7 @@ export default function AshMark() {
         </p>
         <div className="preloader-bar" />
         <div className="preloader-bottom">
-          <span>EST. JAIPUR — 2024</span>
+          <span>EST. MATHURA — 2024</span>
           <span id="preCount">000</span>
         </div>
       </div>
