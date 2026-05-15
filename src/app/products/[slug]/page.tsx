@@ -1,4 +1,5 @@
-```typescriptreact
+
+Claude finished the response
 import { Suspense } from "react"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
@@ -88,6 +89,3 @@ function ProductGridSkeleton() {
     </div>
   )
 }
-
-this is my product page make this page ui ux next level and add many animations to it and also keep in mind to make it fully responsive for smart phones !important
-```
