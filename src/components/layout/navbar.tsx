@@ -303,7 +303,8 @@ export function Navbar() {
 
       <header className="navbar-container sticky top-0 z-50 w-full">
         <div className="navbar-glass">
-          <nav className="flex h-20 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto">
+          {/* Top Row: Logo + Mobile Menu */}
+          <nav className="flex h-16 items-center justify-between px-4 md:px-6 max-w-7xl mx-auto">
             {/* LOGO */}
             <Link href="/" className="flex items-center">
               <div className="logo-glow">
@@ -317,8 +318,8 @@ export function Navbar() {
               </div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8 absolute left-1/2 transform -translate-x-1/2">
+            {/* Desktop Navigation (hidden on md, appears below) */}
+            <div className="hidden xl:flex items-center gap-8">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -333,22 +334,8 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* RIGHT SIDE: Icons & Search */}
+            {/* RIGHT SIDE: Icons */}
             <div className="flex items-center gap-3">
-              {/* Desktop Search */}
-              <div className="hidden lg:flex items-center">
-                <form onSubmit={handleSearch} className="search-container px-4 py-2 w-80 flex items-center gap-2">
-                  <Search className="search-icon h-4 w-4" />
-                  <Input
-                    type="search"
-                    placeholder="Search products..."
-                    className="search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </form>
-              </div>
-
               {/* Wishlist Icon */}
               <Link href="/wishlist">
                 <button className="icon-button">
@@ -422,7 +409,7 @@ export function Navbar() {
               {/* Mobile Menu */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <button className="icon-button md:hidden sheet-trigger">
+                  <button className="icon-button xl:hidden sheet-trigger">
                     <Menu className="menu-icon h-5 w-5" />
                   </button>
                 </SheetTrigger>
@@ -532,6 +519,35 @@ export function Navbar() {
               </Sheet>
             </div>
           </nav>
+
+          {/* Bottom Row: Desktop Search + Navigation (hidden on mobile and tablet) */}
+          <div className="hidden xl:flex items-center justify-center gap-6 px-4 md:px-6 pb-4">
+            {/* Desktop Search */}
+            <form onSubmit={handleSearch} className="search-container px-4 py-2 w-96 flex items-center gap-2">
+              <Search className="search-icon h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search products..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </form>
+          </div>
+
+          {/* MD Screen: Search Bar in middle */}
+          <div className="hidden md:flex xl:hidden items-center justify-center px-4 pb-4">
+            <form onSubmit={handleSearch} className="search-container px-4 py-2 w-full max-w-2xl flex items-center gap-2">
+              <Search className="search-icon h-4 w-4" />
+              <Input
+                type="search"
+                placeholder="Search products..."
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </form>
+          </div>
         </div>
       </header>
     </>
